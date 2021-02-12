@@ -8,28 +8,30 @@ public class HourlyEnergyProductivity implements Concept, Serializable {
 
 	private static final long serialVersionUID = 1L;
 	private AID _producerId;
+	private int _startTime;
 	private int _producedEnergyQuantity;
 	private String _producedEnergyType;
-	private double _pricePerQuantity;
+	private double _pricePerUnit;
 
 	public HourlyEnergyProductivity() {
 		super();
 	}
 
-	public HourlyEnergyProductivity(AID producerId, int startTime, int producedEnergyQuantity,
-			String producedEnergyType, double pricePerQuantity) {
+	public HourlyEnergyProductivity(AID _producerId, int _startTime, int _producedEnergyQuantity,
+			String _producedEnergyType, double _pricePerUnit) {
 		super();
-		this._producerId = producerId;
-		this._producedEnergyQuantity = producedEnergyQuantity;
-		this._producedEnergyType = producedEnergyType;
-		this._pricePerQuantity = pricePerQuantity;
+		this._producerId = _producerId;
+		this._startTime = _startTime;
+		this._producedEnergyQuantity = _producedEnergyQuantity;
+		this._producedEnergyType = _producedEnergyType;
+		this._pricePerUnit = _pricePerUnit;
 	}
 
 	@Override
 	public String toString() {
-		return "HourlyEnergyProductivity [_producerId=" + _producerId + 
-				", _producedEnergyQuantity=" + _producedEnergyQuantity + ", _producedEnergyType="
-				+ _producedEnergyType + ", _pricePerQuantity=" + _pricePerQuantity + "]";
+		return "HourlyEnergyProductivity [_producerId=" + _producerId + ", _startTime=" + _startTime
+				+ ", _producedEnergyQuantity=" + _producedEnergyQuantity + ", _producedEnergyType="
+				+ _producedEnergyType + ", _pricePerUnit=" + _pricePerUnit + "]";
 	}
 
 	/* Getters and Setters */
@@ -39,6 +41,14 @@ public class HourlyEnergyProductivity implements Concept, Serializable {
 
 	public void set_producerId(AID _producerId) {
 		this._producerId = _producerId;
+	}
+
+	public int get_startTime() {
+		return _startTime;
+	}
+
+	public void set_startTime(int _startTime) {
+		this._startTime = _startTime;
 	}
 
 	public int get_producedEnergyQuantity() {
@@ -57,12 +67,12 @@ public class HourlyEnergyProductivity implements Concept, Serializable {
 		this._producedEnergyType = _producedEnergyType;
 	}
 
-	public double get_pricePerQuantity() {
-		return _pricePerQuantity;
+	public double get_pricePerUnit() {
+		return _pricePerUnit;
 	}
 
-	public void set_pricePerQuantity(double _pricePerQuantity) {
-		this._pricePerQuantity = _pricePerQuantity;
+	public void set_pricePerUnit(double _pricePerUnit) {
+		this._pricePerUnit = _pricePerUnit;
 	}
 
 }

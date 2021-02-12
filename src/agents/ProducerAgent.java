@@ -1,5 +1,7 @@
 package agents;
 
+import java.util.ArrayList;
+
 import concepts.HourlyEnergyProductivity;
 import jade.core.Agent;
 import jade.domain.DFService;
@@ -10,8 +12,9 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 public class ProducerAgent extends Agent {
 	private static final long serialVersionUID = 1L;
 
-	private HourlyEnergyProductivity _energyProductivity;
-	private double _cashBalance;
+	private ArrayList<HourlyEnergyProductivity> _energyProductivityList = new ArrayList<>();
+
+	private double _profit;
 
 	protected void setup() {
 		// Registration with Directory Facilitator (DF)
@@ -28,6 +31,21 @@ public class ProducerAgent extends Agent {
 			fe.printStackTrace();
 		}
 		System.out.println("ProducerAgent " + getAID().getName() + " is ready.");
+
+		this._profit = 0;
+	}
+
+	// add a new consumption requirement
+	public void addConsumptionRequirement(int _startTime, int _producedEnergyQuantity, String _producedEnergyType,
+			double _pricePerQuantity) {
+
+		this._energyProductivityList.add(new HourlyEnergyProductivity(this.getAID(), _startTime,
+				_producedEnergyQuantity, _producedEnergyType, _pricePerQuantity));
+	}
+	
+	// add received payment
+	public void addReceivedPaymentToProfit(double p) {
+		this.set_profit(this.get_profit() + p);
 	}
 
 	protected void takeDown() {
@@ -41,20 +59,21 @@ public class ProducerAgent extends Agent {
 		System.out.println("ProducerAgent " + getAID().getName() + " terminated.");
 	}
 
-	public HourlyEnergyProductivity get_energyProductivity() {
-		return _energyProductivity;
+	// getters and setters
+	public ArrayList<HourlyEnergyProductivity> get_energyProductivityList() {
+		return _energyProductivityList;
 	}
 
-	public void set_energyProductivity(HourlyEnergyProductivity _energyProductivity) {
-		this._energyProductivity = _energyProductivity;
+	public void set_energyProductivityList(ArrayList<HourlyEnergyProductivity> _energyProductivityList) {
+		this._energyProductivityList = _energyProductivityList;
 	}
 
-	public double get_cashBalance() {
-		return _cashBalance;
+	public double get_profit() {
+		return _profit;
 	}
 
-	public void set_cashBalance(double _cashBalance) {
-		this._cashBalance = _cashBalance;
+	public void set_profit(double _profit) {
+		this._profit = _profit;
 	}
 
 }

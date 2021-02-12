@@ -1,10 +1,6 @@
 package behaviours;
 
-import java.io.IOException;
-import java.util.ArrayList;
-
-import agents.ProducerAgent;
-import concepts.HourlyEnergyProductivity;
+import agents.ProducerListManagerAgent;
 import jade.core.AID;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.domain.DFService;
@@ -13,23 +9,21 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 
-// Producer send info to MarketPlace
-public class SendProducerInfoBehaviour extends OneShotBehaviour {
+// ProducerListManager asks MarketPlace for a producer list 
+public class AskProducerInfoListBehaviour extends OneShotBehaviour {
 
 	private static final long serialVersionUID = 1L;
 
 	private AID _marketPlaceAID;
-	private ArrayList<HourlyEnergyProductivity> _energyProductivityList = new ArrayList<>();
 
-	public SendProducerInfoBehaviour(ProducerAgent a) {
+	public AskProducerInfoListBehaviour(ProducerListManagerAgent a) {
 		super(a);
-		this._energyProductivityList = a.get_energyProductivityList();
 	}
 
 	@Override
 	public void action() {
 
-		// Search the AID of the MarketPlace agent
+		// Search the AID of the ProducerListManager agent
 		DFAgentDescription dfDescription = new DFAgentDescription();
 		ServiceDescription serviceDescription = new ServiceDescription();
 		serviceDescription.setType("marketPlace");
@@ -43,20 +37,14 @@ public class SendProducerInfoBehaviour extends OneShotBehaviour {
 
 		} catch (FIPAException e) {
 			System.out.println(
-					"ProducerAgent " + myAgent.getAID().getName() + " SendProducerInfoBehaviour: cannot find MarketPlace AID");
+					"ProducerListManagerAgent " + myAgent.getAID().getName() + " AskProducerInfoListBehaviour: cannot find MarketPlace AID");
 			e.printStackTrace();
 		}
 
-		// Send producer's information to Market Place
-		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-		msg.setConversationId("sendProducerInfo");
+		// Send producer list to ProducerListManager
+		ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+		msg.setConversationId("askProducerInfoList");
 		msg.addReceiver(this._marketPlaceAID);
-		try {
-			msg.setContentObject(this._energyProductivityList);
-		} catch (IOException ex) {
-			System.err.println("Cannot add ProducerInfo to message. Sending empty message.");
-			ex.printStackTrace(System.err);
-		}
 		myAgent.send(msg);
 	}
 

@@ -1,6 +1,6 @@
 package agents;
 
-import java.util.ArrayList;
+import java.util.PriorityQueue;
 
 import concepts.HourlyEnergyProductivity;
 import jade.core.Agent;
@@ -8,11 +8,14 @@ import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
+import utils.HourlyEnergyProductivity_Comparator;
 
 public class ProducerListManagerAgent extends Agent {
 	private static final long serialVersionUID = 1L;
 
-	private ArrayList<HourlyEnergyProductivity> _producerList = new ArrayList<>();
+	// Queue of producers' EnergyProductivity, ordering with startTime and price.
+	private PriorityQueue<HourlyEnergyProductivity> _energyProductivityQueue = new PriorityQueue<HourlyEnergyProductivity>(
+			new HourlyEnergyProductivity_Comparator());
 
 	protected void setup() {
 		// Registration with Directory Facilitator (DF)
@@ -42,12 +45,13 @@ public class ProducerListManagerAgent extends Agent {
 		System.out.println("ProducerListManagerAgent " + getAID().getName() + " terminated.");
 	}
 
-	public ArrayList<HourlyEnergyProductivity> get_producerList() {
-		return _producerList;
+	// getters and setters
+	public PriorityQueue<HourlyEnergyProductivity> get_energyProductivityQueue() {
+		return _energyProductivityQueue;
 	}
 
-	public void set_producerList(ArrayList<HourlyEnergyProductivity> _producerList) {
-		this._producerList = _producerList;
+	public void set_energyProductivityQueue(PriorityQueue<HourlyEnergyProductivity> _energyProductivityQueue) {
+		this._energyProductivityQueue = _energyProductivityQueue;
 	}
 
 }

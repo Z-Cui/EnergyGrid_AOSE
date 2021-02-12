@@ -2,6 +2,7 @@ package agents;
 
 import java.util.ArrayList;
 
+import concepts.BookingRequest;
 import concepts.HourlyConsumptionRequirement;
 import concepts.Profile;
 import jade.core.Agent;
@@ -15,7 +16,11 @@ public class ConsumerAgent extends Agent {
 
 	private ArrayList<HourlyConsumptionRequirement> _conReqList = new ArrayList<>();
 	private Profile _profile;
+
 	private double _cashBalance;
+	private double _cumulatedUtility;
+	
+	private BookingRequest ongoing_bookingReq;
 
 	protected void setup() {
 		// Registration with Directory Facilitator (DF)
@@ -32,6 +37,21 @@ public class ConsumerAgent extends Agent {
 			fe.printStackTrace();
 		}
 		System.out.println("ConsumerAgent " + getAID().getName() + " is ready.");
+		
+		this._cumulatedUtility = 0;
+	}
+
+	// add new consumption requirement
+	public void addConsumptionRequirement(int startTime, int consumptionQuantity) {
+		this._conReqList.add(new HourlyConsumptionRequirement(this.getAID(), startTime, consumptionQuantity));
+	}
+
+	// add profile to this consumer
+	public void setProfile(String _preferredEnergyType, double _maximumBudgetPerQuantity, double _paramK,
+			double _paramB_nonRenewable, double _paramB_renewable) {
+
+		this._profile = new Profile(this.getAID(), _preferredEnergyType, _maximumBudgetPerQuantity, _paramK,
+				_paramB_nonRenewable, _paramB_renewable);
 	}
 
 	protected void takeDown() {
@@ -45,6 +65,7 @@ public class ConsumerAgent extends Agent {
 		System.out.println("ConsumerAgent " + getAID().getName() + " terminated.");
 	}
 
+	// getters and setters
 	public ArrayList<HourlyConsumptionRequirement> getConReqList() {
 		return this._conReqList;
 	}
@@ -67,6 +88,14 @@ public class ConsumerAgent extends Agent {
 
 	public void set_cashBalance(double _cashBalance) {
 		this._cashBalance = _cashBalance;
+	}
+
+	public double get_cumulatedUtility() {
+		return _cumulatedUtility;
+	}
+
+	public void set_cumulatedUtility(double _cumulatedUtility) {
+		this._cumulatedUtility = _cumulatedUtility;
 	}
 
 }
