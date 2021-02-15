@@ -3,6 +3,7 @@ package agents;
 import java.util.ArrayList;
 
 import concepts.HourlyEnergyProductivity;
+import jade.core.AID;
 import jade.core.Agent;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
@@ -30,6 +31,23 @@ public class ProducerAgent extends Agent {
 		} catch (FIPAException fe) {
 			fe.printStackTrace();
 		}
+		
+		//Read the arguments for set energyProductivityList
+		Object[] args = getArguments();
+		int[] _startTime = (int[]) args[0];
+		int[] _producedEnergyQuantity = (int[]) args[1];
+		String[] _producedEnergyType = (String[]) args[2];
+		Double[] _pricePerUnit = (Double[]) args[3];
+		
+		ArrayList<HourlyEnergyProductivity> List = new ArrayList<>();
+		for (int i = 0; i <= _startTime.length - 1; i++) {
+			List.add(new HourlyEnergyProductivity(getAID(), _startTime[i], _producedEnergyQuantity[i],
+					_producedEnergyType[i], _pricePerUnit[i]));
+        }
+		
+		set_energyProductivityList(List);
+		
+		
 		System.out.println("ProducerAgent " + getAID().getName() + " is ready.");
 
 		this._profit = 0;

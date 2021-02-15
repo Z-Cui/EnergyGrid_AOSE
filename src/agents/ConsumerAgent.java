@@ -2,16 +2,25 @@ package agents;
 
 import java.util.ArrayList;
 
+import behavioursConsumerAgent.initCA;
+import behavioursConsumerAgent.sendCA;
+import behavioursConsumerAgent.finalizeCA;
+import behavioursConsumerAgent.processCA;
 import concepts.BookingRequest;
 import concepts.HourlyConsumptionRequirement;
 import concepts.Profile;
 import jade.core.Agent;
+import jade.core.behaviours.FSMBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
-import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import jade.domain.FIPAAgentManagement.ServiceDescription;
 
 public class ConsumerAgent extends Agent {
+	
+	private static final String BEHAVIOUR_INIT = "init";
+	private static final String BEHAVIOUR_SEND = "send";
+	private static final String BEHAVIOUR_PROCESS = "process";
+	private static final String BEHAVIOUR_FINALIZE = "finalize";
+	
 	private static final long serialVersionUID = 1L;
 
 	private ArrayList<HourlyConsumptionRequirement> _conReqList = new ArrayList<>();
@@ -23,22 +32,22 @@ public class ConsumerAgent extends Agent {
 	private BookingRequest ongoing_bookingReq;
 
 	protected void setup() {
-		// Registration with Directory Facilitator (DF)
-		DFAgentDescription dfDescription = new DFAgentDescription();
-		dfDescription.setName(this.getAID());
-		ServiceDescription serviceDescription = new ServiceDescription();
-		serviceDescription.setType("consumer");
-		serviceDescription.setName(this.getLocalName() + "-consumer");
-		dfDescription.addServices(serviceDescription);
-		try {
-			DFService.register(this, dfDescription);
-			System.out.println("ConsumerAgent " + getAID().getName() + " regitstered.");
-		} catch (FIPAException fe) {
-			fe.printStackTrace();
-		}
-		System.out.println("ConsumerAgent " + getAID().getName() + " is ready.");
+		FSMBehaviour behaviour = new FSMBehaviour(this);
+		// states
+		behaviour.registerFirstState(new initCA(this), BEHAVIOUR_INIT);
+		behaviour.registerState(new sendCA(this), BEHAVIOUR_SEND);
+		behaviour.registerState(new processCA(this), BEHAVIOUR_PROCESS);
+		behaviour.registerLastState(new finalizeCA(this), BEHAVIOUR_FINALIZE);
+
+		// Transitions
+		behaviour.registerDefaultTransition(BEHAVIOUR_INIT, BEHAVIOUR_SEND);
+		behaviour.registerDefaultTransition(BEHAVIOUR_SEND, BEHAVIOUR_PROCESS);
+		behaviour.registerTransition(BEHAVIOUR_PROCESS, BEHAVIOUR_SEND, 0);
+		behaviour.registerTransition(BEHAVIOUR_PROCESS, BEHAVIOUR_PROCESS, 1);
+		behaviour.registerTransition(BEHAVIOUR_PROCESS, BEHAVIOUR_FINALIZE, 2);
+
+		addBehaviour(behaviour);
 		
-		this._cumulatedUtility = 0;
 	}
 
 	// add new consumption requirement
@@ -48,13 +57,18 @@ public class ConsumerAgent extends Agent {
 
 	// add profile to this consumer
 	public void setProfile(String _preferredEnergyType, double _maximumBudgetPerQuantity, double _paramK,
-			double _paramB_nonRenewable, double _paramB_renewable) {
+			double _paramB_nonRenewable, double _paramB_renewable, ArrayList<HourlyConsumptionRequirement> _conReqList) {
 
-		this._profile = new Profile(this.getAID(), _preferredEnergyType, _maximumBudgetPerQuantity, _paramK,
-				_paramB_nonRenewable, _paramB_renewable);
+		// this._profile = new Profile(this.getAID(), _preferredEnergyType, _maximumBudgetPerQuantity, _paramK, _paramB_nonRenewable, _paramB_renewable);
+		
+		this.setProfile(new Profile(this.getAID(), _preferredEnergyType, _maximumBudgetPerQuantity, _paramK,
+				_paramB_nonRenewable, _paramB_renewable));
+		
+		System.out.println("!!" + this._profile.toString());
+		
 	}
 
-	protected void takeDown() {
+	public void takeDown() {
 		// De-registration
 		try {
 			DFService.deregister(this);
@@ -96,6 +110,14 @@ public class ConsumerAgent extends Agent {
 
 	public void set_cumulatedUtility(double _cumulatedUtility) {
 		this._cumulatedUtility = _cumulatedUtility;
+	}
+	
+	public BookingRequest get_ongoing_bookingReq() {
+		return ongoing_bookingReq;
+	}
+
+	public void set_ongoing_bookingReq(BookingRequest ongoing_bookingReq) {
+		this.ongoing_bookingReq = ongoing_bookingReq;
 	}
 
 }

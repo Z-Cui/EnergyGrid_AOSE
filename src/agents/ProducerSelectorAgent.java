@@ -1,23 +1,34 @@
 package agents;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.PriorityQueue;
 
+import behavioursProducerSelectorAgent.listenPS;
+import behavioursProducerSelectorAgent.processPS;
+import behavioursProducerSelectorAgent.finalizePS;
+import behavioursProducerSelectorAgent.initPS;
 import concepts.BookingRequest;
 import concepts.HourlyConsumptionRequirement;
 import concepts.HourlyEnergyProductivity;
 import concepts.Profile;
 import jade.core.AID;
 import jade.core.Agent;
+import jade.core.behaviours.FSMBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
-import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.lang.acl.ACLMessage;
 import utils.HourlyConsumptionRequirement_Comparator;
 import utils.HourlyEnergyProductivity_Comparator;
 
 public class ProducerSelectorAgent extends Agent {
+	
+	private static final String BEHAVIOUR_INIT = "init";
+	private static final String BEHAVIOUR_LISTEN = "listen";
+	private static final String BEHAVIOUR_PROCESS = "process";
+	private static final String BEHAVIOUR_FINALIZE = "finalize";
+	
 	private static final long serialVersionUID = 1L;
 
 	// Queue of consumers' ConsumptionRequirement, ordering with startTime.
@@ -35,25 +46,30 @@ public class ProducerSelectorAgent extends Agent {
 	private BookingRequest ongoing_bookingReq;
 
 	protected void setup() {
-		// Registration with Directory Facilitator (DF)
-		DFAgentDescription dfDescription = new DFAgentDescription();
-		dfDescription.setName(this.getAID());
-		ServiceDescription serviceDescription = new ServiceDescription();
-		serviceDescription.setType("producerSelector");
-		serviceDescription.setName(this.getLocalName() + "-producerSelector");
-		dfDescription.addServices(serviceDescription);
-		try {
-			DFService.register(this, dfDescription);
-			System.out.println("ProducerSelectorAgent " + getAID().getName() + " regitstered.");
-		} catch (FIPAException fe) {
-			fe.printStackTrace();
-		}
-		System.out.println("ProducerSelectorAgent " + getAID().getName() + " is ready.");
+		FSMBehaviour behaviour = new FSMBehaviour(this);
+		// states
+		behaviour.registerFirstState(new initPS(this), BEHAVIOUR_INIT);
+		behaviour.registerState(new listenPS(this), BEHAVIOUR_LISTEN);
+		behaviour.registerState(new processPS(this), BEHAVIOUR_PROCESS);
+		behaviour.registerLastState(new finalizePS(this), BEHAVIOUR_FINALIZE);
+
+		// Transitions
+		behaviour.registerDefaultTransition(BEHAVIOUR_INIT, BEHAVIOUR_LISTEN);
+		behaviour.registerTransition(BEHAVIOUR_PROCESS, BEHAVIOUR_PROCESS, 0);
+		behaviour.registerTransition(BEHAVIOUR_PROCESS, BEHAVIOUR_LISTEN, 1);
+		behaviour.registerTransition(BEHAVIOUR_LISTEN, BEHAVIOUR_PROCESS, 0);
+		behaviour.registerTransition(BEHAVIOUR_LISTEN, BEHAVIOUR_FINALIZE, 1);
+
+		addBehaviour(behaviour);
 	}
 
 	// To-Do with Behaviour
-	public void ProcessAllRequirements() {
-
+	public int ProcessAllRequirements() {
+		
+		int FlagNoReq = 0;
+		//FlagNoReq, 1 if _consumptionRequirementQueue is Empty
+		//Flag for transitions from process
+		
 		Iterator<HourlyConsumptionRequirement> it = this._consumptionRequirementQueue.iterator();
 
 		while (it.hasNext()) {
@@ -65,9 +81,39 @@ public class ProducerSelectorAgent extends Agent {
 
 			// remove the success consumption requirement
 			if (bookingRequestBestProducer != null) {
+				
+				// Send consumer's profile to ProducerSelector
+				ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+				msg.setConversationId("sendBestProducter");
+				msg.addReceiver(bookingRequestBestProducer.get_consumerId());
+				try {
+					msg.setContentObject(bookingRequestBestProducer);
+				} catch (IOException ex) {
+					System.err.println("Cannot add bookingRequestBestProducer to message. Sending empty message.");
+					ex.printStackTrace(System.err);
+				}
+				this.send(msg);
+				System.out.println("Send best producter from " + getAID().getName() + " to " + bookingRequestBestProducer.get_consumerId().getName());
+				
 				this.removeConsumptionRequirementFromQueue(req);
 			}
 		}
+		if (_consumptionRequirementQueue.isEmpty()) {
+			FlagNoReq = 1;
+		}
+		
+		
+		return FlagNoReq;
+	}
+	
+	// Flag for transitions from listen
+	public int NoExistconsumptionRequirementQueue() {
+		int FlagNoReq = 0;
+		if (_consumptionRequirementQueue.isEmpty()) {
+			FlagNoReq = 1;
+		}
+		return FlagNoReq;
+		
 	}
 
 	// Select a producer maximize utility for a consumption requirement req
@@ -185,7 +231,7 @@ public class ProducerSelectorAgent extends Agent {
 		return _profileHashMap.get(aid.toString());
 	}
 
-	protected void takeDown() {
+	public void takeDown() {
 		// De-registration
 		try {
 			DFService.deregister(this);

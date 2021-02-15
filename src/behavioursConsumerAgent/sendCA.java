@@ -1,10 +1,12 @@
-package behaviours;
+package behavioursConsumerAgent;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import agents.ConsumerAgent;
-import concepts.HourlyEnergyProductivity;
+import concepts.HourlyConsumptionRequirement;
 import concepts.Profile;
+import concepts.SendProfilReqList;
 import jade.core.AID;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.domain.DFService;
@@ -13,17 +15,19 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 
-// Consumer sends his profile to ProducerSelectorAgent
-public class SendConsumerProfileBehaviour extends OneShotBehaviour {
-
+public class sendCA extends OneShotBehaviour{
 	private static final long serialVersionUID = 1L;
 
 	private AID _producerSelectorAID;
-	private Profile _profile;
+	Profile _profile;
+	ArrayList<HourlyConsumptionRequirement> _conReqList;
+	SendProfilReqList sprl;
+	ConsumerAgent agent;
 
-	public SendConsumerProfileBehaviour(ConsumerAgent a) {
-		super(a);
+	public sendCA(ConsumerAgent a) {
+		this.agent = a;
 		this._profile = a.getProfile();
+		this._conReqList = a.getConReqList();
 	}
 
 	@Override
@@ -36,12 +40,12 @@ public class SendConsumerProfileBehaviour extends OneShotBehaviour {
 		dfDescription.addServices(serviceDescription);
 
 		try {
-			DFAgentDescription[] producerSelector = DFService.search(myAgent, dfDescription);
+			DFAgentDescription[] producerSelector = DFService.search(agent, dfDescription);
 			this._producerSelectorAID = producerSelector[0].getName();
 
 		} catch (FIPAException e) {
 			System.out.println(
-					"ConsumerAgent " + myAgent.getAID().getName() + " SendConsumerProfileBehaviour: cannot find ProducerSelector AID");
+					"ConsumerAgent " + agent.getAID().getName() + " SendConsumerProfileBehaviour: cannot find ProducerSelector AID");
 			e.printStackTrace();
 		}
 
@@ -49,14 +53,16 @@ public class SendConsumerProfileBehaviour extends OneShotBehaviour {
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		msg.setConversationId("sendConsumerProfileInfo");
 		msg.addReceiver(this._producerSelectorAID);
+		
 		try {
+			System.out.println("! sendCA");
+			System.out.println("!! sendCA behaviour " + this._profile.toString());
 			msg.setContentObject(this._profile);
 		} catch (IOException ex) {
 			System.err.println("Cannot add ConsumerProfile to message. Sending empty message.");
 			ex.printStackTrace(System.err);
 		}
-		myAgent.send(msg);
-		System.out.println("Send profile from " + myAgent.getAID().getName() + " to " + this._producerSelectorAID.getName());
+		agent.send(msg);
+		System.out.println("Send profile from " + agent.getAID().getName() + " to " + this._producerSelectorAID.getName());
 	}
-
 }

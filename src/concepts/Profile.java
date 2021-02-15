@@ -1,5 +1,7 @@
 package concepts;
 
+import java.util.ArrayList;
+
 import jade.content.Concept;
 import jade.core.AID;
 import jade.util.leap.Serializable;
@@ -13,7 +15,7 @@ public class Profile implements Concept, Serializable {
 
 	/*
 	 * Hourly utility of a consumer = (K-P)*Q + B;
-	 * K: utility from every one unit of quantity;
+	 * K: utility from every one unit of energy;
 	 * P: price per energy unit;
 	 * Q: energy quantity; 
 	 * B: utility for different energy type
@@ -39,10 +41,11 @@ public class Profile implements Concept, Serializable {
 
 	@Override
 	public String toString() {
-		return "PreferenceAndUtility [_consumerId=" + _consumerId + ", _preferredEnergyType=" + _preferredEnergyType
+		return "Profile [_consumerId=" + _consumerId + ", _preferredEnergyType=" + _preferredEnergyType
 				+ ", _maximumBudgetPerQuantity=" + _maximumBudgetPerQuantity + ", _paramK=" + _paramK
 				+ ", _paramB_nonRenewable=" + _paramB_nonRenewable + ", _paramB_renewable=" + _paramB_renewable + "]";
 	}
+	
 
 	/* Getters and Setters */
 	public AID get_consumerId() {
