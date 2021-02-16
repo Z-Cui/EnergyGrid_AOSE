@@ -13,13 +13,8 @@ public class HourlyEnergyProductivity implements Concept, Serializable {
 	private String _producedEnergyType;
 	private double _pricePerUnit;
 
-	public HourlyEnergyProductivity() {
-		super();
-	}
-
 	public HourlyEnergyProductivity(AID _producerId, int _startTime, int _producedEnergyQuantity,
 			String _producedEnergyType, double _pricePerUnit) {
-		super();
 		this._producerId = _producerId;
 		this._startTime = _startTime;
 		this._producedEnergyQuantity = _producedEnergyQuantity;

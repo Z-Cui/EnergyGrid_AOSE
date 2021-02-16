@@ -2,55 +2,58 @@ package agents;
 
 import java.util.ArrayList;
 
+import behavioursProducer.finalizeProducer;
+import behavioursProducer.initProducer;
+import behavioursProducer.processProducer;
+import behavioursProducer.sendProducer_Productivity;
 import concepts.HourlyEnergyProductivity;
-import jade.core.AID;
 import jade.core.Agent;
+import jade.core.behaviours.FSMBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
-import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import jade.domain.FIPAAgentManagement.ServiceDescription;
 
 public class ProducerAgent extends Agent {
 	private static final long serialVersionUID = 1L;
 
+	private static final String BEHAVIOUR_INIT = "init";
+	private static final String BEHAVIOUR_SEND_PRODUCTIVITY_INFO = "send_productivity_info";
+	private static final String BEHAVIOUR_PROCESS = "process";
+	private static final String BEHAVIOUR_FINALIZE = "finalize";
+
 	private ArrayList<HourlyEnergyProductivity> _energyProductivityList = new ArrayList<>();
 
-	private double _profit;
+	private double _profit = 0.0;
 
 	protected void setup() {
-		// Registration with Directory Facilitator (DF)
-		DFAgentDescription dfDescription = new DFAgentDescription();
-		dfDescription.setName(this.getAID());
-		ServiceDescription serviceDescription = new ServiceDescription();
-		serviceDescription.setType("producer");
-		serviceDescription.setName(this.getLocalName() + "-producer");
-		dfDescription.addServices(serviceDescription);
-		try {
-			DFService.register(this, dfDescription);
-			System.out.println("ProducerAgent " + getAID().getName() + " regitstered.");
-		} catch (FIPAException fe) {
-			fe.printStackTrace();
-		}
-		
-		//Read the arguments for set energyProductivityList
+
+		// Read the arguments for set energyProductivityList
 		Object[] args = getArguments();
 		int[] _startTime = (int[]) args[0];
 		int[] _producedEnergyQuantity = (int[]) args[1];
 		String[] _producedEnergyType = (String[]) args[2];
 		Double[] _pricePerUnit = (Double[]) args[3];
-		
+
 		ArrayList<HourlyEnergyProductivity> List = new ArrayList<>();
 		for (int i = 0; i <= _startTime.length - 1; i++) {
 			List.add(new HourlyEnergyProductivity(getAID(), _startTime[i], _producedEnergyQuantity[i],
 					_producedEnergyType[i], _pricePerUnit[i]));
-        }
-		
-		set_energyProductivityList(List);
-		
-		
-		System.out.println("ProducerAgent " + getAID().getName() + " is ready.");
+		}
+		this.set_energyProductivityList(List);
 
-		this._profit = 0;
+		FSMBehaviour behaviour = new FSMBehaviour(this);
+		// states
+		behaviour.registerFirstState(new initProducer(this), BEHAVIOUR_INIT);
+		behaviour.registerState(new sendProducer_Productivity(this), BEHAVIOUR_SEND_PRODUCTIVITY_INFO);
+		behaviour.registerState(new processProducer(this), BEHAVIOUR_PROCESS);
+		behaviour.registerLastState(new finalizeProducer(this), BEHAVIOUR_FINALIZE);
+
+		// Transitions
+		behaviour.registerDefaultTransition(BEHAVIOUR_INIT, BEHAVIOUR_SEND_PRODUCTIVITY_INFO);
+		behaviour.registerDefaultTransition(BEHAVIOUR_SEND_PRODUCTIVITY_INFO, BEHAVIOUR_PROCESS);
+		behaviour.registerTransition(BEHAVIOUR_PROCESS, BEHAVIOUR_PROCESS, 1);
+		behaviour.registerTransition(BEHAVIOUR_PROCESS, BEHAVIOUR_FINALIZE, 2);
+
+		addBehaviour(behaviour);
 	}
 
 	// add a new consumption requirement
@@ -60,13 +63,13 @@ public class ProducerAgent extends Agent {
 		this._energyProductivityList.add(new HourlyEnergyProductivity(this.getAID(), _startTime,
 				_producedEnergyQuantity, _producedEnergyType, _pricePerQuantity));
 	}
-	
+
 	// add received payment
 	public void addReceivedPaymentToProfit(double p) {
 		this.set_profit(this.get_profit() + p);
 	}
 
-	protected void takeDown() {
+	public void takeDown() {
 		// De-registration
 		try {
 			DFService.deregister(this);

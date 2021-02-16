@@ -5,10 +5,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.PriorityQueue;
 
-import behavioursProducerSelectorAgent.listenPS;
-import behavioursProducerSelectorAgent.processPS;
-import behavioursProducerSelectorAgent.finalizePS;
-import behavioursProducerSelectorAgent.initPS;
+import behavioursProducerSelectorAgent.listenProducerSelector;
+import behavioursProducerSelectorAgent.processProducerSelector;
+import behavioursProducerSelectorAgent.finalizeProducerSelector;
+import behavioursProducerSelectorAgent.initProducerSelector;
 import concepts.BookingRequest;
 import concepts.HourlyConsumptionRequirement;
 import concepts.HourlyEnergyProductivity;
@@ -23,13 +23,12 @@ import utils.HourlyConsumptionRequirement_Comparator;
 import utils.HourlyEnergyProductivity_Comparator;
 
 public class ProducerSelectorAgent extends Agent {
-	
+	private static final long serialVersionUID = 1L;
+
 	private static final String BEHAVIOUR_INIT = "init";
 	private static final String BEHAVIOUR_LISTEN = "listen";
 	private static final String BEHAVIOUR_PROCESS = "process";
 	private static final String BEHAVIOUR_FINALIZE = "finalize";
-	
-	private static final long serialVersionUID = 1L;
 
 	// Queue of consumers' ConsumptionRequirement, ordering with startTime.
 	private PriorityQueue<HourlyConsumptionRequirement> _consumptionRequirementQueue = new PriorityQueue<HourlyConsumptionRequirement>(
@@ -47,11 +46,12 @@ public class ProducerSelectorAgent extends Agent {
 
 	protected void setup() {
 		FSMBehaviour behaviour = new FSMBehaviour(this);
+
 		// states
-		behaviour.registerFirstState(new initPS(this), BEHAVIOUR_INIT);
-		behaviour.registerState(new listenPS(this), BEHAVIOUR_LISTEN);
-		behaviour.registerState(new processPS(this), BEHAVIOUR_PROCESS);
-		behaviour.registerLastState(new finalizePS(this), BEHAVIOUR_FINALIZE);
+		behaviour.registerFirstState(new initProducerSelector(this), BEHAVIOUR_INIT);
+		behaviour.registerState(new listenProducerSelector(this), BEHAVIOUR_LISTEN);
+		behaviour.registerState(new processProducerSelector(this), BEHAVIOUR_PROCESS);
+		behaviour.registerLastState(new finalizeProducerSelector(this), BEHAVIOUR_FINALIZE);
 
 		// Transitions
 		behaviour.registerDefaultTransition(BEHAVIOUR_INIT, BEHAVIOUR_LISTEN);
@@ -63,13 +63,12 @@ public class ProducerSelectorAgent extends Agent {
 		addBehaviour(behaviour);
 	}
 
-	// To-Do with Behaviour
 	public int ProcessAllRequirements() {
-		
+
 		int FlagNoReq = 0;
-		//FlagNoReq, 1 if _consumptionRequirementQueue is Empty
-		//Flag for transitions from process
-		
+		// FlagNoReq, 1 if _consumptionRequirementQueue is Empty
+		// Flag for transitions from process
+
 		Iterator<HourlyConsumptionRequirement> it = this._consumptionRequirementQueue.iterator();
 
 		while (it.hasNext()) {
@@ -81,7 +80,7 @@ public class ProducerSelectorAgent extends Agent {
 
 			// remove the success consumption requirement
 			if (bookingRequestBestProducer != null) {
-				
+
 				// Send consumer's profile to ProducerSelector
 				ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 				msg.setConversationId("sendBestProducter");
@@ -93,19 +92,19 @@ public class ProducerSelectorAgent extends Agent {
 					ex.printStackTrace(System.err);
 				}
 				this.send(msg);
-				System.out.println("Send best producter from " + getAID().getName() + " to " + bookingRequestBestProducer.get_consumerId().getName());
-				
+				System.out.println("Send best producter from " + getAID().getName() + " to "
+						+ bookingRequestBestProducer.get_consumerId().getName());
+
 				this.removeConsumptionRequirementFromQueue(req);
 			}
 		}
 		if (_consumptionRequirementQueue.isEmpty()) {
 			FlagNoReq = 1;
 		}
-		
-		
+
 		return FlagNoReq;
 	}
-	
+
 	// Flag for transitions from listen
 	public int NoExistconsumptionRequirementQueue() {
 		int FlagNoReq = 0;
@@ -113,7 +112,7 @@ public class ProducerSelectorAgent extends Agent {
 			FlagNoReq = 1;
 		}
 		return FlagNoReq;
-		
+
 	}
 
 	// Select a producer maximize utility for a consumption requirement req
@@ -142,7 +141,7 @@ public class ProducerSelectorAgent extends Agent {
 			}
 
 			// find a reservable quantity with this producer: min(requirement, productivity)
-			// consumer needs 100, producer has -10. 
+			// consumer needs 100, producer has -10.
 			int _q = req.get_consumptionQuantity() < prod.get_producedEnergyQuantity() ? req.get_consumptionQuantity()
 					: prod.get_producedEnergyQuantity();
 			// If reservable quantity < 0, there is an error
@@ -188,7 +187,7 @@ public class ProducerSelectorAgent extends Agent {
 			_b = this.ongoing_profile.get_paramB_renewable();
 		else
 			_b = this.ongoing_profile.get_paramB_nonRenewable();
-		/* 
+		/*
 		 * utility = (K-P)*Q + B; K: utility from every one unit of quantity; P: price
 		 * per energy unit; Q: energy quantity; B: utility for different energy type
 		 */

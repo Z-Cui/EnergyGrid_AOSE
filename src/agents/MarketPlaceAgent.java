@@ -3,38 +3,43 @@ package agents;
 import java.util.ArrayList;
 import java.util.PriorityQueue;
 
+import behavioursMarketPlaceAgent.finalizeMarketPlace;
+import behavioursMarketPlaceAgent.initMarketPlace;
+import behavioursMarketPlaceAgent.processMarketPlace;
 import concepts.HourlyEnergyProductivity;
 import jade.core.Agent;
+import jade.core.behaviours.FSMBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
-import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import jade.domain.FIPAAgentManagement.ServiceDescription;
 import utils.HourlyEnergyProductivity_Comparator;
 
 public class MarketPlaceAgent extends Agent {
 	private static final long serialVersionUID = 1L;
 
+	private static final String BEHAVIOUR_INIT = "init";
+	private static final String BEHAVIOUR_PROCESS = "process";
+	private static final String BEHAVIOUR_FINALIZE = "finalize";
+
 	// Queue of producers' EnergyProductivity, ordering with startTime and price.
-	private PriorityQueue<HourlyEnergyProductivity> _energyProductivityQueue = 
-			new PriorityQueue<HourlyEnergyProductivity>(new HourlyEnergyProductivity_Comparator());
+	private PriorityQueue<HourlyEnergyProductivity> _energyProductivityQueue = new PriorityQueue<HourlyEnergyProductivity>(
+			new HourlyEnergyProductivity_Comparator());
 
 	protected void setup() {
-		// Registration with Directory Facilitator (DF)
-		DFAgentDescription dfDescription = new DFAgentDescription();
-		dfDescription.setName(this.getAID());
-		ServiceDescription serviceDescription = new ServiceDescription();
-		serviceDescription.setType("marketPlace");
-		serviceDescription.setName(this.getLocalName() + "-marketPlace");
-		dfDescription.addServices(serviceDescription);
-		try {
-			DFService.register(this, dfDescription);
-			System.out.println("MarketPlaceAgent " + getAID().getName() + " regitstered.");
-		} catch (FIPAException fe) {
-			fe.printStackTrace();
-		}
-		System.out.println("MarketPlaceAgent " + getAID().getName() + " is ready.");
+		FSMBehaviour behaviour = new FSMBehaviour(this);
+
+		// states
+		behaviour.registerFirstState(new initMarketPlace(this), BEHAVIOUR_INIT);
+		behaviour.registerState(new processMarketPlace(this), BEHAVIOUR_PROCESS);
+		behaviour.registerLastState(new finalizeMarketPlace(this), BEHAVIOUR_FINALIZE);
+
+		// Transitions
+		behaviour.registerDefaultTransition(BEHAVIOUR_INIT, BEHAVIOUR_PROCESS);
+		behaviour.registerTransition(BEHAVIOUR_PROCESS, BEHAVIOUR_PROCESS, 1);
+		behaviour.registerTransition(BEHAVIOUR_PROCESS, BEHAVIOUR_FINALIZE, 2);
+
+		addBehaviour(behaviour);
 	}
-	
+
 	// add an ArrayList of productivity info to queue
 	public void addArrayListProducerInfoToQueue(ArrayList<HourlyEnergyProductivity> list) {
 		for (int i = 0; i < list.size(); i++) {
@@ -56,7 +61,7 @@ public class MarketPlaceAgent extends Agent {
 		}
 	}
 
-	protected void takeDown() {
+	public void takeDown() {
 		// De-registration
 		try {
 			DFService.deregister(this);

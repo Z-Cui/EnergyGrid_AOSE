@@ -1,12 +1,10 @@
 package concepts;
 
-import java.util.ArrayList;
-
 import jade.content.Concept;
 import jade.core.AID;
 import jade.util.leap.Serializable;
 
-public class Profile implements Concept, Serializable {
+public class Profile implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 	private AID _consumerId;
@@ -23,20 +21,28 @@ public class Profile implements Concept, Serializable {
 	private double _paramK;
 	private double _paramB_nonRenewable;
 	private double _paramB_renewable;
-
+	
 	public Profile() {
-		super();
+		
 	}
 
 	public Profile(AID _consumerId, String _preferredEnergyType, double _maximumBudgetPerQuantity,
 			double _paramK, double _paramB_nonRenewable, double _paramB_renewable) {
-		super();
 		this._consumerId = _consumerId;
 		this._preferredEnergyType = _preferredEnergyType;
 		this._maximumBudgetPerQuantity = _maximumBudgetPerQuantity;
 		this._paramK = _paramK;
 		this._paramB_nonRenewable = _paramB_nonRenewable;
 		this._paramB_renewable = _paramB_renewable;
+	}
+	
+	public Profile(Profile anotherProfile) {
+		this._consumerId = anotherProfile.get_consumerId();
+		this._preferredEnergyType = anotherProfile.get_preferredEnergyType();
+		this._maximumBudgetPerQuantity = anotherProfile.get_maximumBudgetPerQuantity();
+		this._paramK = anotherProfile.get_paramK();
+		this._paramB_nonRenewable = anotherProfile.get_paramB_nonRenewable();
+		this._paramB_renewable = anotherProfile.get_paramB_renewable();
 	}
 
 	@Override

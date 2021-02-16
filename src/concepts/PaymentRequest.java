@@ -10,12 +10,7 @@ public class PaymentRequest implements Concept, Serializable {
 	private BookingRequest _bq;
 	private double _money;
 
-	public PaymentRequest() {
-		super();
-	}
-
 	public PaymentRequest(BookingRequest _bq, double _money) {
-		super();
 		this._bq = _bq;
 		this._money = _money;
 	}

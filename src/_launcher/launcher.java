@@ -31,7 +31,7 @@ public class launcher {
 			ac5 = mc.createNewAgent("ProducerSelector", ProducerSelectorAgent.class.getName(), new Object[] {new String("agent02")});
 			//Consumers  new Object[] {_cashBalance,new String("_preferredEnergyType"),_maximumBudgetPerQuantity,_paramK,_paramB_nonRenewable,_paramB_renewable})
 			ac6 = mc.createNewAgent("Consumer01", ConsumerAgent.class.getName(), new Object[] {100.00,new String("nonRenewable"),2.00,1.5,5.1,4.2,10,20});
-			ac7 = mc.createNewAgent("Consumer02", ConsumerAgent.class.getName(), new Object[] {100.00,new String("nonRenewable"),2.00,1.5,5.1,4.2,10,40});
+			//ac7 = mc.createNewAgent("Consumer02", ConsumerAgent.class.getName(), new Object[] {100.00,new String("nonRenewable"),2.00,1.5,5.1,4.2,10,40});
 			//Producers, create one producer with list hourly energy productivity
 			ac8 = mc.createNewAgent("Producer01", ProducerAgent.class.getName(), new Object[] {new int[] {10,11},new int[] {100,120},
 					new String[] {"nonRenewable","nonRenewable"},new Double[] {1.1,1.2}});

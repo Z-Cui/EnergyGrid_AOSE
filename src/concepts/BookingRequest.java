@@ -26,12 +26,11 @@ public class BookingRequest implements Concept, Serializable {
 	private int _status;
 
 	public BookingRequest() {
-		super();
+		
 	}
-
+	
 	public BookingRequest(AID _consumerId, AID _producerId, int _startTime, String _reservedEnergyType,
 			int _reservedEnergyQuantity, double _pricePerUnit, int _status) {
-		super();
 		this._consumerId = _consumerId;
 		this._producerId = _producerId;
 		this._startTime = _startTime;
