@@ -1,14 +1,14 @@
-package behavioursProducerSelectorAgent;
+package behavioursBookingManagerAgent;
 
-import agents.ProducerSelectorAgent;
+import agents.BookingManagerAgent;
 import jade.core.behaviours.OneShotBehaviour;
 
-public class finalizePS extends OneShotBehaviour{
+public class finalizeBookingManager extends OneShotBehaviour{
 	
 	private static final long serialVersionUID = 1L;
-	ProducerSelectorAgent agent;
+	BookingManagerAgent agent;
 	
-	public finalizePS(ProducerSelectorAgent a) {
+	public finalizeBookingManager(BookingManagerAgent a) {
 		this.agent = a;
 	}
 	

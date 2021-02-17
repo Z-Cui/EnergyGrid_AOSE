@@ -17,16 +17,24 @@ public class BookingRequest implements Concept, Serializable {
 
 	// Status of a booking request:
 	// 0: [Proposition] ProducerSelector generates it as a proposition to Consumer;
-	// 1: [Request] Consumer confirms it and send it to BookingManager;
-	// 2: [InQueue] BookingManager is managing this booking;
-	// 3: [Processing] BookingManager is handling this booking;
-	// 4: [Confirmed] Producer confirms this booking;
-	// 5: [Rejected] Producer rejects this booking;
+	// 1: [Request] Consumer confirms it;
+	// 2: [Accepted] Producer accepts this booking;
+	// 3: [Rejected] Producer rejects this booking;
 	// -1: Error
 	private int _status;
 
 	public BookingRequest() {
 		
+	}
+	
+	public BookingRequest(BookingRequest req) {
+		this._consumerId = req.get_consumerId();
+		this._producerId = req.get_producerId();
+		this._startTime = req.get_startTime();
+		this._reservedEnergyType = req.get_reservedEnergyType();
+		this._reservedEnergyQuantity = req.get_reservedEnergyQuantity();
+		this._pricePerUnit = req.get_pricePerUnit();
+		this._status = req.get_status();
 	}
 	
 	public BookingRequest(AID _consumerId, AID _producerId, int _startTime, String _reservedEnergyType,

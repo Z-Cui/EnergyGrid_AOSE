@@ -1,5 +1,6 @@
 package behavioursMarketPlaceAgent;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -27,8 +28,8 @@ public class processMarketPlace extends OneShotBehaviour {
 		if (msg != null) {
 
 			try {
-				if (msg.getConversationId() == "sendProducerProductivityInfo") {
-
+				switch (msg.getConversationId()) {
+				case "producerInfo": // received Producer Info from Producer Agent
 					this._productivityList = (ArrayList<HourlyEnergyProductivity>) msg.getContentObject();
 
 					Iterator<HourlyEnergyProductivity> it = this._productivityList.iterator();
@@ -36,19 +37,43 @@ public class processMarketPlace extends OneShotBehaviour {
 						HourlyEnergyProductivity p = it.next();
 						agent.addProducerInfoToQueue(p);
 					}
-					System.out.println("-- Received " + this._productivityList.size() + " Productivity Info from "
-							+ msg.getSender().getName());
-				} else
-					System.out.println("-- MarketPlace listened an unrecognizable message");
+					System.out.println("-- MarketPlace: Received " + this._productivityList.size()
+							+ " Productivity Info from " + msg.getSender().getName());
+					break;
+				case "askProducerInfo": // received Producer Info request from ProducerListManager agent
+					ACLMessage msg_send = new ACLMessage(ACLMessage.INFORM);
+					msg_send.setConversationId("producerInfo_MarketPlaceToProducerListManager");
+					msg_send.addReceiver(msg.getSender());
+
+					if (agent.get_energyProductivityQueue().size() > 0) {
+						msg_send.setContentObject(agent.get_energyProductivityQueue());
+						agent.send(msg_send);
+					} else {
+						// do nothing
+					}
+					break;
+				case "removeAllAdvertisement": // received remove all advertisement request from a Producer agent
+					System.out.println(
+							"-- MarketPlace: Received remove all advertisement request from " + msg.getSender());
+					agent.removeProducerInfoFromQueue(msg.getSender());
+					break;
+				default:
+					System.out.println("-- MarketPlace: Received an unrecognizable message");
+				}
 
 			} catch (UnreadableException e) {
-				System.err.println("Cannot get productivity info from message");
+				System.err.println("-- MarketPlace: Cannot get productivity info from message of Producer");
+				e.printStackTrace();
+			} catch (IOException e) {
+				System.err.println("-- MarketPlace: Cannot add productivity info to message");
 				e.printStackTrace();
 			}
 		}
 	}
 
 	public int onEnd() {
+		// System.out.println("--- Mkpc " + agent.get_energyProductivityQueue().size() +
+		// "prod.");
 		return 1;
 	}
 }

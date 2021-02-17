@@ -1,10 +1,8 @@
-package behaviours;
+package behavioursProducerListManagerAgent;
 
 import java.io.IOException;
 
-import agents.ConsumerAgent;
-import concepts.HourlyEnergyProductivity;
-import concepts.Profile;
+import agents.ProducerListManagerAgent;
 import jade.core.AID;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.domain.DFService;
@@ -13,17 +11,15 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 
-// Consumer sends his profile to ProducerSelectorAgent
-public class SendConsumerProfileBehaviour extends OneShotBehaviour {
-
+public class shareProducerListManager extends OneShotBehaviour {
 	private static final long serialVersionUID = 1L;
 
 	private AID _producerSelectorAID;
-	private Profile _profile;
+	ProducerListManagerAgent agent;
 
-	public SendConsumerProfileBehaviour(ConsumerAgent a) {
-		super(a);
-		this._profile = a.getProfile();
+	public shareProducerListManager(ProducerListManagerAgent a) {
+		this.agent = a;
+
 	}
 
 	@Override
@@ -36,27 +32,28 @@ public class SendConsumerProfileBehaviour extends OneShotBehaviour {
 		dfDescription.addServices(serviceDescription);
 
 		try {
-			DFAgentDescription[] producerSelector = DFService.search(myAgent, dfDescription);
+			DFAgentDescription[] producerSelector = DFService.search(agent, dfDescription);
 			this._producerSelectorAID = producerSelector[0].getName();
 
 		} catch (FIPAException e) {
-			System.out.println(
-					"ConsumerAgent " + myAgent.getAID().getName() + " SendConsumerProfileBehaviour: cannot find ProducerSelector AID");
+			System.out.println("ProducerListManager " + agent.getAID().getName()
+					+ " share ProducerInfo to ProducerSelector: cannot find ProducerSelector AID");
 			e.printStackTrace();
 		}
 
 		// Send consumer's profile to ProducerSelector
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-		msg.setConversationId("sendConsumerProfileInfo");
+		msg.setConversationId("producerInfoQueue");
 		msg.addReceiver(this._producerSelectorAID);
+
 		try {
-			msg.setContentObject(this._profile);
+			msg.setContentObject(agent.get_energyProductivityQueue());
 		} catch (IOException ex) {
-			System.err.println("Cannot add ConsumerProfile to message. Sending empty message.");
+			System.err.println("Cannot add ProducerInfo to message. Sending empty message.");
 			ex.printStackTrace(System.err);
 		}
-		myAgent.send(msg);
-		System.out.println("Send profile from " + myAgent.getAID().getName() + " to " + this._producerSelectorAID.getName());
+		agent.send(msg);
+		System.out.println("-- ProducerListManager: Share " + agent.get_energyProductivityQueue().size()
+				+ " Producer Info from " + agent.getAID().getName() + " to " + this._producerSelectorAID.getName());
 	}
-
 }

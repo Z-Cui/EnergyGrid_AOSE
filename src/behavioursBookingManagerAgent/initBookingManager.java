@@ -1,37 +1,40 @@
-package behavioursProducerSelectorAgent;
+package behavioursBookingManagerAgent;
 
-import agents.ProducerSelectorAgent;
+import agents.BookingManagerAgent;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 
-public class init extends OneShotBehaviour{
+public class initBookingManager extends OneShotBehaviour {
 
 	private static final long serialVersionUID = 1L;
-	ProducerSelectorAgent agent;
-	
-	public init(ProducerSelectorAgent a) {
+	BookingManagerAgent agent;
+
+	public initBookingManager(BookingManagerAgent a) {
 		this.agent = a;
 	}
 
 	@Override
 	public void action() {
+
 		// Registration with Directory Facilitator (DF)
 		DFAgentDescription dfDescription = new DFAgentDescription();
 		dfDescription.setName(agent.getAID());
 		ServiceDescription serviceDescription = new ServiceDescription();
-		serviceDescription.setType("producerSelector");
-		serviceDescription.setName(agent.getLocalName() + "-producerSelector");
+		serviceDescription.setType("bookingManager");
+		serviceDescription.setName(agent.getLocalName() + "-bookingManager");
 		dfDescription.addServices(serviceDescription);
 		try {
 			DFService.register(agent, dfDescription);
-			System.out.println("ProducerSelectorAgent " + agent.getAID().getName() + " regitstered.");
+			System.out.println("BookingManagerAgent " + agent.getAID().getName() + " regitstered.");
 		} catch (FIPAException fe) {
 			fe.printStackTrace();
 		}
-		System.out.println("ProducerSelectorAgent " + agent.getAID().getName() + " is ready.");
-	}
 
+		System.out.println("BookingManagerAgent " + agent.getAID().getName() + " is ready.");
+		
+		agent.doWait(200);
+	}
 }

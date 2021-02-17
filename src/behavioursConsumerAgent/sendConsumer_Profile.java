@@ -48,7 +48,7 @@ public class sendConsumer_Profile extends OneShotBehaviour{
 
 		// Send consumer's profile to ProducerSelector
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-		msg.setConversationId("sendConsumerProfileInfo");
+		msg.setConversationId("consumerProfileInfo");
 		msg.addReceiver(this._producerSelectorAID);
 		
 		try {
@@ -58,6 +58,6 @@ public class sendConsumer_Profile extends OneShotBehaviour{
 			ex.printStackTrace(System.err);
 		}
 		agent.send(msg);
-		System.out.println("-- Send profile from " + agent.getAID().getName() + " to " + this._producerSelectorAID.getName());
+		System.out.println("-- ConsumerAgent: Send profile from " + agent.getAID().getName() + " to " + this._producerSelectorAID.getName());
 	}
 }

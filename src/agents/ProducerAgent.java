@@ -6,7 +6,9 @@ import behavioursProducer.finalizeProducer;
 import behavioursProducer.initProducer;
 import behavioursProducer.processProducer;
 import behavioursProducer.sendProducer_Productivity;
+import concepts.BookingRequest;
 import concepts.HourlyEnergyProductivity;
+import concepts.PaymentRequest;
 import jade.core.Agent;
 import jade.core.behaviours.FSMBehaviour;
 import jade.domain.DFService;
@@ -50,6 +52,7 @@ public class ProducerAgent extends Agent {
 		// Transitions
 		behaviour.registerDefaultTransition(BEHAVIOUR_INIT, BEHAVIOUR_SEND_PRODUCTIVITY_INFO);
 		behaviour.registerDefaultTransition(BEHAVIOUR_SEND_PRODUCTIVITY_INFO, BEHAVIOUR_PROCESS);
+		// behaviour.registerDefaultTransition(BEHAVIOUR_PROCESS, BEHAVIOUR_FINALIZE);
 		behaviour.registerTransition(BEHAVIOUR_PROCESS, BEHAVIOUR_PROCESS, 1);
 		behaviour.registerTransition(BEHAVIOUR_PROCESS, BEHAVIOUR_FINALIZE, 2);
 
@@ -64,6 +67,38 @@ public class ProducerAgent extends Agent {
 				_producedEnergyQuantity, _producedEnergyType, _pricePerQuantity));
 	}
 
+	// accept(2) or reject(3) a booking request
+	public int acceptOrReject(BookingRequest bq) {
+		for (int i = 0; i < this.get_energyProductivityList().size(); i++) {
+			HourlyEnergyProductivity p = this.get_energyProductivityList().get(i);
+			if (p.get_startTime() == bq.get_startTime() && bq.get_reservedEnergyType().equals(p.get_producedEnergyType())
+					&& bq.get_reservedEnergyQuantity() <= p.get_producedEnergyQuantity()) {
+				return 2;
+			}
+		}
+		return 3;
+	}
+	
+	// process a payment: Success(1); Failure(-1, means the booking request is not valid)
+	public int processPayment(PaymentRequest pq) {
+		BookingRequest bq = pq.get_bq();
+		for (int i = 0; i < this.get_energyProductivityList().size(); i++) {
+			HourlyEnergyProductivity p = this.get_energyProductivityList().get(i);
+			if (bq.get_startTime() == p.get_startTime() && bq.get_reservedEnergyType().equals(p.get_producedEnergyType())) {
+				int soldQuantity = bq.get_reservedEnergyQuantity();
+				int actualQuantity = p.get_producedEnergyQuantity();
+				if (actualQuantity >= soldQuantity) {
+					p.set_producedEnergyQuantity(actualQuantity - soldQuantity);
+					this.addReceivedPaymentToProfit(pq.get_money());
+					return 1;
+				}
+				else 
+					return -1;
+			}
+		}
+		return -1;
+	}
+	
 	// add received payment
 	public void addReceivedPaymentToProfit(double p) {
 		this.set_profit(this.get_profit() + p);

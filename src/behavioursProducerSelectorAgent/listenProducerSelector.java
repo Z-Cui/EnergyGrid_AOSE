@@ -2,9 +2,11 @@ package behavioursProducerSelectorAgent;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.PriorityQueue;
 
 import agents.ProducerSelectorAgent;
 import concepts.HourlyConsumptionRequirement;
+import concepts.HourlyEnergyProductivity;
 import concepts.Profile;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
@@ -24,44 +26,59 @@ public class listenProducerSelector extends OneShotBehaviour {
 
 	@SuppressWarnings("unchecked")
 	public void action() {
-		// agent.doWait(300);
+		//System.out.println("== listen ProducerSelector");
+		agent.doWait(1000);
+
 		ACLMessage msg = agent.receive();
 		if (msg != null) {
 			try {
-
-				if (msg.getConversationId() == "sendConsumerProfileInfo") {
+				//System.out.println(msg.getConversationId());
+				
+				// received a profile from consumer
+				if (msg.getConversationId() == "consumerProfileInfo") {
 
 					this._profile = new Profile((Profile) msg.getContentObject());
 					agent.addProfileToHashMap(this._profile);
-					System.out.println("-- Received profile from " + msg.getSender().getName());
+					System.out.println("-- ProducerSelectorAgent: Received profile from " + msg.getSender().getName());
 
-				} else if (msg.getConversationId() == "sendConsumerConsumptionRequirementInfo") {
+				}
+				// received a list of consumption requirement from consumer
+				else if (msg.getConversationId() == "consumerConsumptionRequirementInfo") {
 
 					this._conReqList = (ArrayList<HourlyConsumptionRequirement>) msg.getContentObject();
 
 					Iterator<HourlyConsumptionRequirement> it = this._conReqList.iterator();
 					while (it.hasNext()) {
-						HourlyConsumptionRequirement hcr = it.next();
-						agent.addConsumptionRequirementToQueue(hcr);
+						HourlyConsumptionRequirement r = it.next();
+						agent.addConsumptionRequirementToQueue(r);
 					}
-					System.out.println("-- Received " + this._conReqList.size() + " Consumption Requirement from "
-							+ msg.getSender().getName());
-				} else
-					System.out.println("-- ProducerSelectorAgent listened an unrecognizable message");
+					System.out.println("-- ProducerSelectorAgent: Received " + this._conReqList.size()
+							+ " Consumption Requirement from " + msg.getSender().getName());
+				}
+				// received info of producers from ProducerListManager
+				else if (msg.getConversationId() == "producerInfoQueue") {
+
+					agent.set_energyProductivityQueue((PriorityQueue<HourlyEnergyProductivity>) msg.getContentObject());
+
+					System.out.println("-- ProducerSelectorAgent: Received ProductivityInfo from " + msg.getSender().getName());
+				}
+				
+				// received unknown message
+				else
+					System.out.println("-- ProducerSelectorAgent: received an unrecognizable message");
 
 			} catch (UnreadableException e) {
 				System.err.println("Cannot get profile and conReqList from message");
 				e.printStackTrace();
 			}
 		}
-		flag = agent.NoExistconsumptionRequirementQueue();
-		// System.out.println("--- listen ProducerSelector: Flag " + flag);
 	}
 
 	public int onEnd() {
-
-		// return this.flag;
-		return 0;
+		if (agent.get_consumptionRequirementQueue().isEmpty())
+			return 0;
+		else
+			return 1;
 	}
 
 }

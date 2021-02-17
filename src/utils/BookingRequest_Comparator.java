@@ -2,8 +2,11 @@ package utils;
 
 import java.util.Comparator;
 import concepts.BookingRequest;
+import jade.util.leap.Serializable;
 
-public class BookingRequest_Comparator implements Comparator<BookingRequest> {
+public class BookingRequest_Comparator implements Comparator<BookingRequest>, Serializable {
+
+	private static final long serialVersionUID = 1L;
 
 	@Override
 	public int compare(BookingRequest req1, BookingRequest req2) {

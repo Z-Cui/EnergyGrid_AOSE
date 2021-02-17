@@ -2,10 +2,12 @@ package utils;
 
 import java.util.Comparator;
 
-import concepts.HourlyConsumptionRequirement;
 import concepts.HourlyEnergyProductivity;
+import jade.util.leap.Serializable;
 
-public class HourlyEnergyProductivity_Comparator implements Comparator<HourlyEnergyProductivity> {
+public class HourlyEnergyProductivity_Comparator implements Comparator<HourlyEnergyProductivity>, Serializable {
+
+	private static final long serialVersionUID = 1L;
 
 	@Override
 	public int compare(HourlyEnergyProductivity req1, HourlyEnergyProductivity req2) {

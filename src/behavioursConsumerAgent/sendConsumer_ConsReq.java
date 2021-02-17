@@ -46,7 +46,7 @@ public class sendConsumer_ConsReq extends OneShotBehaviour{
 
 		// Send consumer's profile to ProducerSelector
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-		msg.setConversationId("sendConsumerConsumptionRequirementInfo");
+		msg.setConversationId("consumerConsumptionRequirementInfo");
 		msg.addReceiver(this._producerSelectorAID);
 		
 		try {
@@ -56,6 +56,6 @@ public class sendConsumer_ConsReq extends OneShotBehaviour{
 			ex.printStackTrace(System.err);
 		}
 		agent.send(msg);
-		System.out.println("-- Send " + this._conReqList.size() + " Consumption Requirement from " + agent.getAID().getName() + " to " + this._producerSelectorAID.getName());
+		System.out.println("-- ConsumerAgent: Send " + this._conReqList.size() + " Consumption Requirement from " + agent.getAID().getName() + " to " + this._producerSelectorAID.getName());
 	}
 }

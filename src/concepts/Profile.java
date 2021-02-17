@@ -1,6 +1,5 @@
 package concepts;
 
-import jade.content.Concept;
 import jade.core.AID;
 import jade.util.leap.Serializable;
 

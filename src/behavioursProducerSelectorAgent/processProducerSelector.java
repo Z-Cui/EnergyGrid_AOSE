@@ -7,7 +7,7 @@ public class processProducerSelector extends OneShotBehaviour{
 
 	private static final long serialVersionUID = 1L;
 	ProducerSelectorAgent agent;
-	int retour;
+	int state_flag;
 	
 	public processProducerSelector(ProducerSelectorAgent a) {
 		this.agent = a;
@@ -15,11 +15,13 @@ public class processProducerSelector extends OneShotBehaviour{
 	
 	@Override
 	public void action() {
-		System.out.println("In process status - Producer Selector");
-		this.retour = agent.ProcessAllRequirements();
+		//System.out.println("== process ProducerSelector");
+		agent.doWait(1000);
+		
+		this.state_flag = agent.ProcessAllRequirements();
 	}
 	
 	public int onEnd() {
-		return this.retour;
+		return this.state_flag;
 	}
 }

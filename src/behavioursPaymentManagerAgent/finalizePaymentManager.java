@@ -1,14 +1,14 @@
-package behavioursConsumerAgent;
+package behavioursPaymentManagerAgent;
 
-import agents.ConsumerAgent;
+import agents.PaymentManagerAgent;
 import jade.core.behaviours.OneShotBehaviour;
 
-public class finalizeCA extends OneShotBehaviour{
+public class finalizePaymentManager extends OneShotBehaviour{
 	
 	private static final long serialVersionUID = 1L;
-	ConsumerAgent agent;
+	PaymentManagerAgent agent;
 	
-	public finalizeCA(ConsumerAgent a) {
+	public finalizePaymentManager(PaymentManagerAgent a) {
 		this.agent = a;
 	}
 	

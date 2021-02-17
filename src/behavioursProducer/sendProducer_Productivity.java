@@ -28,7 +28,7 @@ public class sendProducer_Productivity extends OneShotBehaviour{
 	@Override
 	public void action() {
 		
-		// Search the AID of the ProducerSelector agent
+		// Search the AID of the MarketPlace agent
 		DFAgentDescription dfDescription = new DFAgentDescription();
 		ServiceDescription serviceDescription = new ServiceDescription();
 		serviceDescription.setType("marketPlace");
@@ -44,9 +44,9 @@ public class sendProducer_Productivity extends OneShotBehaviour{
 			e.printStackTrace();
 		}
 
-		// Send consumer's profile to ProducerSelector
+		// Send producer's productivity info to MarketPlace
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-		msg.setConversationId("sendProducerProductivityInfo");
+		msg.setConversationId("producerInfo");
 		msg.addReceiver(this._marketPlaceAID);
 		
 		try {
@@ -56,7 +56,7 @@ public class sendProducer_Productivity extends OneShotBehaviour{
 			ex.printStackTrace(System.err);
 		}
 		agent.send(msg);
-		System.out.println("-- Send " + this._energyProductivityList.size() + " Productivity Info from " + agent.getAID().getName() + " to " + this._marketPlaceAID.getName());
+		System.out.println("-- ProducerAgent: Send " + this._energyProductivityList.size() + " Productivity Info from " + agent.getAID().getName() + " to " + this._marketPlaceAID.getName());
 	}
 
 }

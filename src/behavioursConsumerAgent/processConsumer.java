@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import agents.ConsumerAgent;
 import concepts.BookingRequest;
+import concepts.PaymentRequest;
 import jade.core.AID;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.domain.DFService;
@@ -18,7 +19,8 @@ public class processConsumer extends OneShotBehaviour {
 	private static final long serialVersionUID = 1L;
 	ConsumerAgent agent;
 	AID _bookingManagerAID;
-	int flag;
+	AID _paymentManagerAID;
+	int flag = 0;
 
 	public processConsumer(ConsumerAgent a) {
 		this.agent = a;
@@ -26,8 +28,6 @@ public class processConsumer extends OneShotBehaviour {
 
 	@Override
 	public void action() {
-		ACLMessage message = agent.receive();
-		BookingRequest bookingRequestBestProducer;
 
 		// Search the AID of the BookingManager agent
 		DFAgentDescription dfDescription = new DFAgentDescription();
@@ -35,51 +35,123 @@ public class processConsumer extends OneShotBehaviour {
 		serviceDescription.setType("BookingManager");
 		dfDescription.addServices(serviceDescription);
 
+		// Search the AID of the PaymentManager agent
+		DFAgentDescription dfDescription2 = new DFAgentDescription();
+		ServiceDescription serviceDescription2 = new ServiceDescription();
+		serviceDescription2.setType("PaymentManager");
+		dfDescription2.addServices(serviceDescription2);
+
 		try {
-			DFAgentDescription[] bookingManager = DFService.search(myAgent, dfDescription);
+			DFAgentDescription[] bookingManager = DFService.search(agent, dfDescription);
 			this._bookingManagerAID = bookingManager[0].getName();
+			DFAgentDescription[] paymentManager = DFService.search(agent, dfDescription2);
+			this._paymentManagerAID = paymentManager[0].getName();
 
 		} catch (FIPAException e) {
 			System.out.println(
-					"ConsumerAgent " + agent.getAID().getName() + " cannot find BookingManager AID");
+					"ConsumerAgent " + agent.getAID().getName() + " cannot find BookingManager / PaymentManager AID");
 			e.printStackTrace();
 		}
 
-		this.flag = 1;
+		// receive messages
+		ACLMessage msg_receive = agent.receive();
 
-		if (message != null) {
-			try {
-				bookingRequestBestProducer = (BookingRequest) message.getContentObject();
-				if (bookingRequestBestProducer.get_status() == 0) {
-					agent.set_ongoing_bookingReq(bookingRequestBestProducer);
-					agent.get_ongoing_bookingReq().set_status(1);
+		if (msg_receive != null) {
+			// received a message from ProducerSelector, that no Producer can satisfy a
+			// consumption requirement
+			if (msg_receive.getConversationId() == "noProducerForThisRequirement") {
+				this.flag = 1;
+			}
+			// received a payment request object
+			else if (msg_receive.getConversationId() == "paymentRequest") {
+				try {
+					PaymentRequest paymentRequest = (PaymentRequest) msg_receive.getContentObject();
 
-					// Send bookingRequestBestProducer to BookingManager
-					ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-					msg.setConversationId("sendBestProducerBookingManager");
-					msg.addReceiver(this._bookingManagerAID);
-					try {
-						msg.setContentObject(agent.get_ongoing_bookingReq());
-					} catch (IOException ex) {
-						System.err.println("Cannot add bookingRequestBestProducer to message. Sending empty message.");
-						ex.printStackTrace(System.err);
+					switch (paymentRequest.get_status()) {
+					case 0: // refused payment, producer is not valid
+					case -1: // the booking request is expired
+
+						// money is back
+						agent.set_cashBalance(agent.get_cashBalance() + paymentRequest.get_money());
+						// to-do restart payment.
+						System.out.println("In processConsumer, need to restart payment (not developed yet)");
+						break;
+					case 1: // producer received payment
+						// energy is reserved, consumer gets utility.
+						agent.addUtility(paymentRequest);
+						agent.deleteConsumptionRequirement(paymentRequest.get_bq().get_startTime());
+						System.out.println("-- Consumer: " + agent.getAID().getName()
+								+ " energy is reserved, gets utility, current utility: " + agent.get_cumulatedUtility()
+								+ ", remaining consumption requirements: " + agent.getConReqList().size());
+						break;
 					}
-					myAgent.send(msg);
-					System.out.println("Send Booking Request from " + myAgent.getAID().getName() + " to "
-							+ this._bookingManagerAID.getName());
+
+				} catch (UnreadableException e) {
+					e.printStackTrace();
 				}
 
-				this.flag = 2;
-			} catch (UnreadableException e) {
-				System.err.println("Cannot get bookingRequestBestProducer");
-				e.printStackTrace();
 			}
+			// received a booking request object
+			else if (msg_receive.getConversationId() == "bookingRequest") {
+				try {
+					BookingRequest bookingRequest = (BookingRequest) msg_receive.getContentObject();
 
+					switch (bookingRequest.get_status()) {
+					case -1:
+						// does not find producer
+						System.out.println("processConsumer - cannot find any producer");
+						break;
+					case 0:
+						if (agent.canPay(bookingRequest)) {
+							// send it to booking manager agent
+							BookingRequest bookingReq = new BookingRequest(bookingRequest);
+							bookingReq.set_status(1);
+
+							ACLMessage msg_send = new ACLMessage(ACLMessage.INFORM);
+							msg_send.setConversationId("bookingRequest");
+							msg_send.addReceiver(this._bookingManagerAID);
+							try {
+								msg_send.setContentObject(bookingReq);
+							} catch (IOException ex) {
+								System.err.println("Cannot add BookingRequest to message. Sending empty message.");
+								ex.printStackTrace(System.err);
+							}
+							agent.send(msg_send);
+							System.out.println("-- Consumer: Confirmed and Send Booking Request from "
+									+ agent.getAID().getName() + " to " + this._bookingManagerAID.getName());
+						} else
+							bookingRequest.get_status();
+						// change req info to match budget and send it to Selector
+						break;
+					case 2: // booking request is accepted by producer
+						// consumer generates a payment
+						if (agent.canPay(bookingRequest)) {
+							double toPay = bookingRequest.get_pricePerUnit()
+									* bookingRequest.get_reservedEnergyQuantity();
+							agent.set_cashBalance(agent.get_cashBalance() - toPay);
+							PaymentRequest paymentRequest = new PaymentRequest(bookingRequest, toPay, 0);
+							ACLMessage msg_send = new ACLMessage(ACLMessage.INFORM);
+							msg_send.setConversationId("paymentRequest");
+							msg_send.addReceiver(this._paymentManagerAID);
+							msg_send.setContentObject(paymentRequest);
+							agent.send(msg_send);
+							System.out.println("-- Consumer: Send Payment from " + agent.getAID().getName()
+									+ " to PaymentManager");
+						}
+						break;
+					case 3: // rejected by producer
+						System.out.println("processConsumer - producer rejected the payment");
+						break;
+					}
+
+				} catch (UnreadableException | IOException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 
 	public int onEnd() {
-		// return this.flag;
-		return 1;
+		return agent.satisfied();
 	}
 }

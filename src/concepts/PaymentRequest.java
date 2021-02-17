@@ -9,10 +9,15 @@ public class PaymentRequest implements Concept, Serializable {
 
 	private BookingRequest _bq;
 	private double _money;
+	private int _status;
+	// status: 0: consumer sends payment
+	// status: 1: producer receives payment
+	// status: -1: the booking request(inside of payment request) is expired 
 
-	public PaymentRequest(BookingRequest _bq, double _money) {
+	public PaymentRequest(BookingRequest _bq, double _money, int _status) {
 		this._bq = _bq;
 		this._money = _money;
+		this._status = _status;
 	}
 
 	// getters and setters
@@ -31,5 +36,15 @@ public class PaymentRequest implements Concept, Serializable {
 	public void set_money(double _money) {
 		this._money = _money;
 	}
+
+	public int get_status() {
+		return _status;
+	}
+
+	public void set_status(int _status) {
+		this._status = _status;
+	}
+	
+	
 
 }

@@ -1,6 +1,6 @@
 package agents;
 
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.PriorityQueue;
@@ -41,8 +41,10 @@ public class ProducerSelectorAgent extends Agent {
 	private PriorityQueue<HourlyEnergyProductivity> _energyProductivityQueue = new PriorityQueue<HourlyEnergyProductivity>(
 			new HourlyEnergyProductivity_Comparator());
 
+	// History of proposals (booking requests) of best producer recommendations
+	private ArrayList<BookingRequest> _historical_proposals = new ArrayList<>();
+
 	private Profile ongoing_profile;
-	private BookingRequest ongoing_bookingReq;
 
 	protected void setup() {
 		FSMBehaviour behaviour = new FSMBehaviour(this);
@@ -55,10 +57,12 @@ public class ProducerSelectorAgent extends Agent {
 
 		// Transitions
 		behaviour.registerDefaultTransition(BEHAVIOUR_INIT, BEHAVIOUR_LISTEN);
+		behaviour.registerTransition(BEHAVIOUR_LISTEN, BEHAVIOUR_LISTEN, 0);
+		behaviour.registerTransition(BEHAVIOUR_LISTEN, BEHAVIOUR_PROCESS, 1);
 		behaviour.registerTransition(BEHAVIOUR_PROCESS, BEHAVIOUR_PROCESS, 0);
 		behaviour.registerTransition(BEHAVIOUR_PROCESS, BEHAVIOUR_LISTEN, 1);
-		behaviour.registerTransition(BEHAVIOUR_LISTEN, BEHAVIOUR_PROCESS, 0);
-		behaviour.registerTransition(BEHAVIOUR_LISTEN, BEHAVIOUR_FINALIZE, 1);
+		behaviour.registerTransition(BEHAVIOUR_PROCESS, BEHAVIOUR_FINALIZE, 2);
+		behaviour.registerTransition(BEHAVIOUR_LISTEN, BEHAVIOUR_FINALIZE, 2);
 
 		addBehaviour(behaviour);
 	}
@@ -69,68 +73,89 @@ public class ProducerSelectorAgent extends Agent {
 		// FlagNoReq, 1 if _consumptionRequirementQueue is Empty
 		// Flag for transitions from process
 
+		if (this.get_energyProductivityQueue().size() == 0)
+			return 1;
+
 		Iterator<HourlyConsumptionRequirement> it = this._consumptionRequirementQueue.iterator();
 
+		PriorityQueue<HourlyConsumptionRequirement> newQueue = new PriorityQueue<HourlyConsumptionRequirement>(
+				new HourlyConsumptionRequirement_Comparator());
+
 		while (it.hasNext()) {
+
 			// loop: every consumption requirement
 			HourlyConsumptionRequirement req = it.next();
+			// this.removeConsumptionRequirementFromQueue(req);
+
+			ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+			msg.addReceiver(req.get_consumerId());
 
 			// find the best producer (info encapsulated in BookingRequest type)
-			BookingRequest bookingRequestBestProducer = SelectProducerForOneRequirement(req);
+			BookingRequest bookingRequestBestProducer = SelectProducerForOneRequirement(req,
+					this.get_energyProductivityQueue());
 
-			// remove the success consumption requirement
-			if (bookingRequestBestProducer != null) {
-
-				// Send consumer's profile to ProducerSelector
-				ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-				msg.setConversationId("sendBestProducter");
-				msg.addReceiver(bookingRequestBestProducer.get_consumerId());
+			switch (bookingRequestBestProducer.get_status()) {
+			case -1: // did not find a producer who maximizes utility
+				msg.setConversationId("noProducerForThisRequirement");
+				newQueue.add(req);
 				try {
 					msg.setContentObject(bookingRequestBestProducer);
-				} catch (IOException ex) {
+				} catch (Exception e) {
+					System.err.println(
+							"Cannot add Unsatisfiable ConsumptionRequirement to message. Sending empty message.");
+					e.printStackTrace();
+				}
+				System.out.println("-- ProducerSelector: Cannot find a producer for the requirement " + req.toString());
+				break;
+			case 0: // found the best producer
+				// add the generated booking request proposal to queue (history)
+				this._historical_proposals.add(bookingRequestBestProducer);
+
+				// send proposal to consumer
+				msg.setConversationId("bookingRequest");
+				try {
+					msg.setContentObject(bookingRequestBestProducer);
+				} catch (Exception ex) {
 					System.err.println("Cannot add bookingRequestBestProducer to message. Sending empty message.");
 					ex.printStackTrace(System.err);
 				}
-				this.send(msg);
-				System.out.println("Send best producter from " + getAID().getName() + " to "
+				System.out.println("-- ProducerSelector: Found best producter for "
 						+ bookingRequestBestProducer.get_consumerId().getName());
-
-				this.removeConsumptionRequirementFromQueue(req);
+				break;
 			}
+			this.send(msg);
 		}
-		if (_consumptionRequirementQueue.isEmpty()) {
+
+		this.set_consumptionRequirementQueue(newQueue);
+
+		if (this.get_consumptionRequirementQueue().isEmpty()) {
 			FlagNoReq = 1;
+			System.out.println("!!! ProducerSelectorAgent: Now the queue for consumption requirements is EMPTY");
+		}
+		else {
+			System.out.println("!!! ProducerSelectorAgent: Tried to find producers, but some consumption requirements are unsatisfiable");
 		}
 
 		return FlagNoReq;
-	}
-
-	// Flag for transitions from listen
-	public int NoExistconsumptionRequirementQueue() {
-		int FlagNoReq = 0;
-		if (_consumptionRequirementQueue.isEmpty()) {
-			FlagNoReq = 1;
-		}
-		return FlagNoReq;
-
 	}
 
 	// Select a producer maximize utility for a consumption requirement req
-	public BookingRequest SelectProducerForOneRequirement(HourlyConsumptionRequirement req) {
+	public BookingRequest SelectProducerForOneRequirement(HourlyConsumptionRequirement req,
+			PriorityQueue<HourlyEnergyProductivity> prodQueue) {
 
 		// load this consumer's profile
 		this.ongoing_profile = this.findProfileFromAID(req.get_consumerId());
 		// create a new booking request
-		this.ongoing_bookingReq = new BookingRequest();
+		BookingRequest ongoing_bookingReq = new BookingRequest();
 
 		// initialize parameters of this new booking request
-		this.ongoing_bookingReq.set_consumerId(req.get_consumerId());
-		this.ongoing_bookingReq.set_startTime(req.get_startTime());
-		this.ongoing_bookingReq.set_status(-1);
+		ongoing_bookingReq.set_consumerId(req.get_consumerId());
+		ongoing_bookingReq.set_startTime(req.get_startTime());
+		ongoing_bookingReq.set_status(-1);
 
 		// find a producer maximize this consumer's utility
 		double utility_max = 0;
-		Iterator<HourlyEnergyProductivity> it = this._energyProductivityQueue.iterator();
+		Iterator<HourlyEnergyProductivity> it = prodQueue.iterator();
 		while (it.hasNext()) {
 
 			HourlyEnergyProductivity prod = it.next();
@@ -151,24 +176,52 @@ public class ProducerSelectorAgent extends Agent {
 			}
 
 			// calculate utility
-			double utility = CalculateUtility(req, ongoing_profile, prod, _q);
+			double utility = CalculateUtility(req, this.ongoing_profile, prod, _q);
 
-			// if this producer's offer brings higher utility
-			if (utility > utility_max) {
+			// if this producer's offer brings higher utility OR same utility but preferred
+			// energy type
+			if (utility > utility_max || (utility == utility_max
+					&& prod.get_producedEnergyType().equals(this.ongoing_profile.get_preferredEnergyType()))) {
 				utility_max = utility;
-				this.ongoing_bookingReq.set_producerId(prod.get_producerId());
-				this.ongoing_bookingReq.set_pricePerUnit(prod.get_pricePerUnit());
-				this.ongoing_bookingReq.set_reservedEnergyType(prod.get_producedEnergyType());
-				this.ongoing_bookingReq.set_reservedEnergyQuantity(_q);
-				this.ongoing_bookingReq.set_status(0);
+				ongoing_bookingReq.set_producerId(prod.get_producerId());
+				ongoing_bookingReq.set_pricePerUnit(prod.get_pricePerUnit());
+				ongoing_bookingReq.set_reservedEnergyType(prod.get_producedEnergyType());
+				ongoing_bookingReq.set_reservedEnergyQuantity(_q);
+				ongoing_bookingReq.set_status(0);
 			}
 		}
 
-		// send the best producer within the created BookingRequest
-		if (this.ongoing_bookingReq.get_status() == 0) {
-			return this.ongoing_bookingReq;
-		} else
-			return null;
+		// verify if this booking request has been proposed.
+		// if yes, need to choose another producer
+		if (this.get_historical_proposals().isEmpty()) {
+			return ongoing_bookingReq;
+		} else {
+			int need_another_producer = 0;
+			PriorityQueue<HourlyEnergyProductivity> newQueue = new PriorityQueue<HourlyEnergyProductivity>(
+					new HourlyEnergyProductivity_Comparator());
+			for (int i = 0; i < this.get_historical_proposals().size(); i++) {
+
+				BookingRequest proposal = this.get_historical_proposals().get(i);
+
+				if (proposal.equals(ongoing_bookingReq)) {
+					Iterator<HourlyEnergyProductivity> it2 = this.get_energyProductivityQueue().iterator();
+					while (it2.hasNext()) {
+						HourlyEnergyProductivity prod = it2.next();
+						// if same time, type, producerId between previous proposal and current best
+						// producer
+						if (!(prod.get_producerId().equals(proposal.get_producerId())
+								&& prod.get_startTime() == proposal.get_startTime()
+								&& prod.get_producedEnergyType().equals(proposal.get_reservedEnergyType()))) {
+							newQueue.add(prod);
+						} else
+							need_another_producer = 1;
+					}
+				}
+			}
+
+			return (need_another_producer == 0) ? ongoing_bookingReq : SelectProducerForOneRequirement(req, newQueue);
+		}
+
 	}
 
 	// calculate the utility
@@ -202,16 +255,6 @@ public class ProducerSelectorAgent extends Agent {
 		}
 	}
 
-	// remove a consumption requirement from queue
-	public void removeConsumptionRequirementFromQueue(HourlyConsumptionRequirement consReq) {
-		try {
-			this._consumptionRequirementQueue.remove(consReq);
-		} catch (Exception e) {
-			System.out.println("Cannot remove ConsumptionRequirement from PriorityQueue in ProducerSelectorAgent");
-			e.printStackTrace();
-		}
-	}
-
 	// add new profile to profile-hashmap: key = AID.toString()
 	public void addProfileToHashMap(Profile profile) {
 
@@ -239,6 +282,48 @@ public class ProducerSelectorAgent extends Agent {
 			fe.printStackTrace();
 		}
 		System.out.println("ProducerSelectorAgent " + getAID().getName() + " terminated.");
+	}
+
+	// getters and setters
+	public PriorityQueue<HourlyConsumptionRequirement> get_consumptionRequirementQueue() {
+		return _consumptionRequirementQueue;
+	}
+
+	public void set_consumptionRequirementQueue(
+			PriorityQueue<HourlyConsumptionRequirement> _consumptionRequirementQueue) {
+		this._consumptionRequirementQueue = _consumptionRequirementQueue;
+	}
+
+	public HashMap<String, Profile> get_profileHashMap() {
+		return _profileHashMap;
+	}
+
+	public void set_profileHashMap(HashMap<String, Profile> _profileHashMap) {
+		this._profileHashMap = _profileHashMap;
+	}
+
+	public PriorityQueue<HourlyEnergyProductivity> get_energyProductivityQueue() {
+		return _energyProductivityQueue;
+	}
+
+	public void set_energyProductivityQueue(PriorityQueue<HourlyEnergyProductivity> _energyProductivityQueue) {
+		this._energyProductivityQueue = _energyProductivityQueue;
+	}
+
+	public Profile getOngoing_profile() {
+		return ongoing_profile;
+	}
+
+	public void setOngoing_profile(Profile ongoing_profile) {
+		this.ongoing_profile = ongoing_profile;
+	}
+
+	public ArrayList<BookingRequest> get_historical_proposals() {
+		return _historical_proposals;
+	}
+
+	public void set_historical_proposals(ArrayList<BookingRequest> _historical_proposals) {
+		this._historical_proposals = _historical_proposals;
 	}
 
 }

@@ -1,12 +1,14 @@
 package agents;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.PriorityQueue;
 
 import behavioursMarketPlaceAgent.finalizeMarketPlace;
 import behavioursMarketPlaceAgent.initMarketPlace;
 import behavioursMarketPlaceAgent.processMarketPlace;
 import concepts.HourlyEnergyProductivity;
+import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.FSMBehaviour;
 import jade.domain.DFService;
@@ -50,6 +52,22 @@ public class MarketPlaceAgent extends Agent {
 	// add a new received productivity info to queue
 	public void addProducerInfoToQueue(HourlyEnergyProductivity p) {
 		this._energyProductivityQueue.add(p);
+	}
+	
+	// remove all advertisement of a producer
+	public void removeProducerInfoFromQueue(AID producerAID) {
+		PriorityQueue<HourlyEnergyProductivity> newQueue = new PriorityQueue<HourlyEnergyProductivity>(
+				new HourlyEnergyProductivity_Comparator());
+		
+	    Iterator<HourlyEnergyProductivity> it = this._energyProductivityQueue.iterator();
+	    while (it.hasNext()) {
+	    	HourlyEnergyProductivity p = this._energyProductivityQueue.poll();
+	    	if (!p.get_producerId().toString().equals(producerAID.toString())) {
+	    		newQueue.add(p);
+	    	}
+	    }
+	    
+	    this.set_energyProductivityQueue(newQueue);
 	}
 
 	// remove automatically expired info
