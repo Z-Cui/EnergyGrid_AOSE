@@ -24,6 +24,8 @@ public class processMarketPlace extends OneShotBehaviour {
 	@Override
 	public void action() {
 		ACLMessage msg = agent.receive();
+		
+		agent.doWait(200);
 
 		if (msg != null) {
 

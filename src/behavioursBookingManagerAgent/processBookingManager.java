@@ -20,6 +20,8 @@ public class processBookingManager extends OneShotBehaviour {
 	@Override
 	public void action() {
 		ACLMessage msg_receive = agent.receive();
+		
+		agent.doWait(200);
 
 		if (msg_receive != null) {
 

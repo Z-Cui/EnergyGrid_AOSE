@@ -15,7 +15,7 @@ import utils.HourlyEnergyProductivity_Comparator;
 
 public class ProducerListManagerAgent extends Agent {
 	private static final long serialVersionUID = 1L;
-	
+
 	private static final String BEHAVIOUR_INIT = "init";
 	private static final String BEHAVIOUR_UPDATE = "update";
 	private static final String BEHAVIOUR_SHARE = "share";
@@ -26,7 +26,7 @@ public class ProducerListManagerAgent extends Agent {
 			new HourlyEnergyProductivity_Comparator());
 
 	protected void setup() {
-		
+
 		FSMBehaviour behaviour = new FSMBehaviour(this);
 
 		// states

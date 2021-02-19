@@ -14,7 +14,7 @@ import utils.PaymentRequest_Comparator;
 
 public class PaymentManagerAgent extends Agent {
 	private static final long serialVersionUID = 1L;
-	
+
 	private static final String BEHAVIOUR_INIT = "init";
 	private static final String BEHAVIOUR_PROCESS = "process";
 	private static final String BEHAVIOUR_FINALIZE = "finalize";
@@ -39,21 +39,11 @@ public class PaymentManagerAgent extends Agent {
 		addBehaviour(behaviour);
 	}
 
-	// add new received booking request to queue
+	// Add new received booking request to queue
 	public void addPaymentRequestToQueue(PaymentRequest pReq) {
-		// if this bq doesn't exist in queue, we add it.
+		// if this payment request doesn't exist in queue, we add it.
 		if (!this._paymentRequestQueue.contains(pReq)) {
 			this._paymentRequestQueue.add(pReq);
-		}
-	}
-
-	// remove a booking requirement from queue
-	public void removeBookingRequirementFromQueue(PaymentRequest pReq) {
-		try {
-			this._paymentRequestQueue.remove(pReq);
-		} catch (Exception e) {
-			System.out.print("Cannot remove PaymentRequest from PriorityQueue in PaymentManagerAgent");
-			e.printStackTrace();
 		}
 	}
 
@@ -66,6 +56,15 @@ public class PaymentManagerAgent extends Agent {
 			fe.printStackTrace();
 		}
 		System.out.println("PaymentManagerAgent " + getAID().getName() + " terminated.");
+	}
+
+	// getters and setters
+	public PriorityQueue<PaymentRequest> get_paymentRequestQueue() {
+		return _paymentRequestQueue;
+	}
+
+	public void set_paymentRequestQueue(PriorityQueue<PaymentRequest> _paymentRequestQueue) {
+		this._paymentRequestQueue = _paymentRequestQueue;
 	}
 
 }

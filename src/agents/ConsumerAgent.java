@@ -45,23 +45,22 @@ public class ConsumerAgent extends Agent {
 		double _paramK = (double) args[3];
 		double _paramB_nonRenewable = (double) args[4];
 		double _paramB_renewable = (double) args[5];
-		
+
 		int[] _startTime = (int[]) args[6];
 		int[] _consumptionQuantity = (int[]) args[7];
 		// System.out.println(_startTime.length);
-		
+
 		ArrayList<HourlyConsumptionRequirement> newList = new ArrayList<>();
-		for (int i=0; i <= _startTime.length-1; i++) {
+		for (int i = 0; i <= _startTime.length - 1; i++) {
 			newList.add(new HourlyConsumptionRequirement(getAID(), _startTime[i], _consumptionQuantity[i]));
 		}
 		this.setConReqList(newList);
-		
 
 		this.setProfile(new Profile(this.getAID(), _preferredEnergyType, _maximumBudgetPerQuantity, _paramK,
 				_paramB_nonRenewable, _paramB_renewable));
 
 		FSMBehaviour behaviour = new FSMBehaviour(this);
-		
+
 		// states
 		behaviour.registerFirstState(new initConsumer(this), BEHAVIOUR_INIT);
 		behaviour.registerState(new sendConsumer_Profile(this), BEHAVIOUR_SEND_PROFILE);
@@ -78,61 +77,60 @@ public class ConsumerAgent extends Agent {
 
 		addBehaviour(behaviour);
 	}
-	
-	// delete a consumption requirement from startTime. 
+
+	// delete a consumption requirement from startTime.
 	// return 1 if success, 0 for failure
 	public int deleteConsumptionRequirement(int startTime) {
-		for(int i = 0; i < this._conReqList.size(); i++) {
+		for (int i = 0; i < this._conReqList.size(); i++) {
 			if (this._conReqList.get(i).get_startTime() == startTime) {
 				this._conReqList.remove(i);
-				return 1; 
+				return 1;
 			}
 		}
 		return 0;
 	}
-	
+
 	// check remaining cash is enough for a booking request
 	public boolean canPay(BookingRequest bq) {
 		if (bq.get_pricePerUnit() * bq.get_reservedEnergyQuantity() <= this._cashBalance) {
 			return true;
-		}
-		else
+		} else
 			return false;
 	}
-	
-	// add Utility from successful payment request 
+
+	// add Utility from successful payment request
 	public void addUtility(PaymentRequest pq) {
 		double actualUtiliy = this.get_cumulatedUtility();
 		double newUtility = this.CalculateUtility(pq.get_bq(), this.getProfile());
 		this.set_cumulatedUtility(actualUtiliy + newUtility);
 	}
-	
+
 	// calculate the utility
-		public double CalculateUtility(BookingRequest bq, Profile profile) {
+	public double CalculateUtility(BookingRequest bq, Profile profile) {
 
-			double _p = bq.get_pricePerUnit();
-			int _q = bq.get_reservedEnergyQuantity();
-			String _type = bq.get_reservedEnergyType();
+		double _p = bq.get_pricePerUnit();
+		int _q = bq.get_reservedEnergyQuantity();
+		String _type = bq.get_reservedEnergyType();
 
-			double _k = profile.get_paramK();
-			double _b;
-			if (_type == "Renewable")
-				_b = this.getProfile().get_paramB_renewable();
-			else
-				_b = this.getProfile().get_paramB_nonRenewable();
-			/*
-			 * utility = (K-P)*Q + B; K: utility from every one unit of quantity; P: price
-			 * per energy unit; Q: energy quantity; B: utility for different energy type
-			 */
-			return (_k - _p) * _q + _b;
-		}
-	
+		double _k = profile.get_paramK();
+		double _b;
+		if (_type == "Renewable")
+			_b = this.getProfile().get_paramB_renewable();
+		else
+			_b = this.getProfile().get_paramB_nonRenewable();
+		/*
+		 * utility = (K-P)*Q + B; K: utility from every one unit of quantity; P: price
+		 * per energy unit; Q: energy quantity; B: utility for different energy type
+		 */
+		return (_k - _p) * _q + _b;
+	}
+
 	// if all requirements have been satisfied
 	public int satisfied() {
 		// 1: yes, 0: no
 		if (this.getConReqList().size() == 0)
 			return 1;
-		else 
+		else
 			return 0;
 	}
 

@@ -25,6 +25,7 @@ public class ProducerAgent extends Agent {
 	private ArrayList<HourlyEnergyProductivity> _energyProductivityList = new ArrayList<>();
 
 	private double _profit = 0.0;
+	private long startTimeWithoutMessage = System.currentTimeMillis();
 
 	protected void setup() {
 
@@ -35,6 +36,7 @@ public class ProducerAgent extends Agent {
 		String[] _producedEnergyType = (String[]) args[2];
 		Double[] _pricePerUnit = (Double[]) args[3];
 
+		// Set productivity info
 		ArrayList<HourlyEnergyProductivity> List = new ArrayList<>();
 		for (int i = 0; i <= _startTime.length - 1; i++) {
 			List.add(new HourlyEnergyProductivity(getAID(), _startTime[i], _producedEnergyQuantity[i],
@@ -52,54 +54,48 @@ public class ProducerAgent extends Agent {
 		// Transitions
 		behaviour.registerDefaultTransition(BEHAVIOUR_INIT, BEHAVIOUR_SEND_PRODUCTIVITY_INFO);
 		behaviour.registerDefaultTransition(BEHAVIOUR_SEND_PRODUCTIVITY_INFO, BEHAVIOUR_PROCESS);
-		// behaviour.registerDefaultTransition(BEHAVIOUR_PROCESS, BEHAVIOUR_FINALIZE);
 		behaviour.registerTransition(BEHAVIOUR_PROCESS, BEHAVIOUR_PROCESS, 1);
 		behaviour.registerTransition(BEHAVIOUR_PROCESS, BEHAVIOUR_FINALIZE, 2);
 
 		addBehaviour(behaviour);
 	}
 
-	// add a new consumption requirement
-	public void addConsumptionRequirement(int _startTime, int _producedEnergyQuantity, String _producedEnergyType,
-			double _pricePerQuantity) {
-
-		this._energyProductivityList.add(new HourlyEnergyProductivity(this.getAID(), _startTime,
-				_producedEnergyQuantity, _producedEnergyType, _pricePerQuantity));
-	}
-
-	// accept(2) or reject(3) a booking request
+	// Accept(2) or Reject(3) a booking request
 	public int acceptOrReject(BookingRequest bq) {
 		for (int i = 0; i < this.get_energyProductivityList().size(); i++) {
 			HourlyEnergyProductivity p = this.get_energyProductivityList().get(i);
-			if (p.get_startTime() == bq.get_startTime() && bq.get_reservedEnergyType().equals(p.get_producedEnergyType())
+			if (p.get_startTime() == bq.get_startTime()
+					&& bq.get_reservedEnergyType().equals(p.get_producedEnergyType())
 					&& bq.get_reservedEnergyQuantity() <= p.get_producedEnergyQuantity()) {
 				return 2;
 			}
 		}
 		return 3;
 	}
-	
-	// process a payment: Success(1); Failure(-1, means the booking request is not valid)
+
+	// Process a payment
+	// Success(1);
+	// Failure(-1, means the booking request is not valid)
 	public int processPayment(PaymentRequest pq) {
 		BookingRequest bq = pq.get_bq();
 		for (int i = 0; i < this.get_energyProductivityList().size(); i++) {
 			HourlyEnergyProductivity p = this.get_energyProductivityList().get(i);
-			if (bq.get_startTime() == p.get_startTime() && bq.get_reservedEnergyType().equals(p.get_producedEnergyType())) {
+			if (bq.get_startTime() == p.get_startTime()
+					&& bq.get_reservedEnergyType().equals(p.get_producedEnergyType())) {
 				int soldQuantity = bq.get_reservedEnergyQuantity();
 				int actualQuantity = p.get_producedEnergyQuantity();
 				if (actualQuantity >= soldQuantity) {
 					p.set_producedEnergyQuantity(actualQuantity - soldQuantity);
 					this.addReceivedPaymentToProfit(pq.get_money());
 					return 1;
-				}
-				else 
+				} else
 					return -1;
 			}
 		}
 		return -1;
 	}
-	
-	// add received payment
+
+	// Add received payment to profit
 	public void addReceivedPaymentToProfit(double p) {
 		this.set_profit(this.get_profit() + p);
 	}
@@ -130,6 +126,14 @@ public class ProducerAgent extends Agent {
 
 	public void set_profit(double _profit) {
 		this._profit = _profit;
+	}
+
+	public long getStartTimeWithoutMessage() {
+		return startTimeWithoutMessage;
+	}
+
+	public void setStartTimeWithoutMessage(long timeWithoutMessage) {
+		this.startTimeWithoutMessage = timeWithoutMessage;
 	}
 
 }

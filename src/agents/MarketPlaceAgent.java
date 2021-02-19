@@ -42,35 +42,35 @@ public class MarketPlaceAgent extends Agent {
 		addBehaviour(behaviour);
 	}
 
-	// add an ArrayList of productivity info to queue
+	// Add an ArrayList of productivity info to queue
 	public void addArrayListProducerInfoToQueue(ArrayList<HourlyEnergyProductivity> list) {
 		for (int i = 0; i < list.size(); i++) {
 			addProducerInfoToQueue(list.get(i));
 		}
 	}
 
-	// add a new received productivity info to queue
+	// Add a new received productivity info to queue
 	public void addProducerInfoToQueue(HourlyEnergyProductivity p) {
 		this._energyProductivityQueue.add(p);
 	}
-	
-	// remove all advertisement of a producer
+
+	// Remove all advertisement of a producer
 	public void removeProducerInfoFromQueue(AID producerAID) {
 		PriorityQueue<HourlyEnergyProductivity> newQueue = new PriorityQueue<HourlyEnergyProductivity>(
 				new HourlyEnergyProductivity_Comparator());
-		
-	    Iterator<HourlyEnergyProductivity> it = this._energyProductivityQueue.iterator();
-	    while (it.hasNext()) {
-	    	HourlyEnergyProductivity p = this._energyProductivityQueue.poll();
-	    	if (!p.get_producerId().toString().equals(producerAID.toString())) {
-	    		newQueue.add(p);
-	    	}
-	    }
-	    
-	    this.set_energyProductivityQueue(newQueue);
+
+		Iterator<HourlyEnergyProductivity> it = this._energyProductivityQueue.iterator();
+		while (it.hasNext()) {
+			HourlyEnergyProductivity p = this._energyProductivityQueue.poll();
+			if (!p.get_producerId().toString().equals(producerAID.toString())) {
+				newQueue.add(p);
+			}
+		}
+
+		this.set_energyProductivityQueue(newQueue);
 	}
 
-	// remove automatically expired info
+	// Remove automatically expired info
 	public void removeExpiredInfo(int currentTime) {
 		// if the first info is expired,
 		while (this._energyProductivityQueue.peek().get_startTime() < currentTime) {

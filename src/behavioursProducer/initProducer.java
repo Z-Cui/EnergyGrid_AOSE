@@ -35,7 +35,7 @@ public class initProducer extends OneShotBehaviour{
 		
 		System.out.println("ProducerAgent " + agent.getAID().getName() + " is ready.");
 		
-		agent.doWait(5000);
+		agent.doWait(15000);
 		
 	}
 }

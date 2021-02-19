@@ -35,7 +35,7 @@ public class initProducerListManager extends OneShotBehaviour {
 
 		System.out.println("ProducerListManager " + agent.getAID().getName() + " is ready.");
 		
-		agent.doWait(5000);
+		agent.doWait(15000);
 
 	}
 }

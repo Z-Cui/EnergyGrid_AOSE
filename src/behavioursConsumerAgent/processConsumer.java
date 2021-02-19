@@ -28,30 +28,8 @@ public class processConsumer extends OneShotBehaviour {
 
 	@Override
 	public void action() {
-
-		// Search the AID of the BookingManager agent
-		DFAgentDescription dfDescription = new DFAgentDescription();
-		ServiceDescription serviceDescription = new ServiceDescription();
-		serviceDescription.setType("BookingManager");
-		dfDescription.addServices(serviceDescription);
-
-		// Search the AID of the PaymentManager agent
-		DFAgentDescription dfDescription2 = new DFAgentDescription();
-		ServiceDescription serviceDescription2 = new ServiceDescription();
-		serviceDescription2.setType("PaymentManager");
-		dfDescription2.addServices(serviceDescription2);
-
-		try {
-			DFAgentDescription[] bookingManager = DFService.search(agent, dfDescription);
-			this._bookingManagerAID = bookingManager[0].getName();
-			DFAgentDescription[] paymentManager = DFService.search(agent, dfDescription2);
-			this._paymentManagerAID = paymentManager[0].getName();
-
-		} catch (FIPAException e) {
-			System.out.println(
-					"ConsumerAgent " + agent.getAID().getName() + " cannot find BookingManager / PaymentManager AID");
-			e.printStackTrace();
-		}
+		
+		agent.doWait(200);
 
 		// receive messages
 		ACLMessage msg_receive = agent.receive();
@@ -66,6 +44,21 @@ public class processConsumer extends OneShotBehaviour {
 			else if (msg_receive.getConversationId() == "paymentRequest") {
 				try {
 					PaymentRequest paymentRequest = (PaymentRequest) msg_receive.getContentObject();
+					
+					// Search the AID of the PaymentManager agent
+					DFAgentDescription dfDescription2 = new DFAgentDescription();
+					ServiceDescription serviceDescription2 = new ServiceDescription();
+					serviceDescription2.setType("PaymentManager");
+					dfDescription2.addServices(serviceDescription2);
+					try {
+						DFAgentDescription[] paymentManager = DFService.search(agent, dfDescription2);
+						this._paymentManagerAID = paymentManager[0].getName();
+
+					} catch (FIPAException e) {
+						System.out.println(
+								"ConsumerAgent " + agent.getAID().getName() + " cannot find PaymentManager AID");
+						e.printStackTrace();
+					}
 
 					switch (paymentRequest.get_status()) {
 					case 0: // refused payment, producer is not valid
@@ -95,6 +88,19 @@ public class processConsumer extends OneShotBehaviour {
 			else if (msg_receive.getConversationId() == "bookingRequest") {
 				try {
 					BookingRequest bookingRequest = (BookingRequest) msg_receive.getContentObject();
+					// Search the AID of the BookingManager agent
+					DFAgentDescription dfDescription = new DFAgentDescription();
+					ServiceDescription serviceDescription = new ServiceDescription();
+					serviceDescription.setType("BookingManager");
+					dfDescription.addServices(serviceDescription);
+					try {
+						DFAgentDescription[] bookingManager = DFService.search(agent, dfDescription);
+						this._bookingManagerAID = bookingManager[0].getName();
+					} catch (FIPAException e) {
+						System.out.println(
+								"ConsumerAgent " + agent.getAID().getName() + " cannot find BookingManager AID");
+						e.printStackTrace();
+					}
 
 					switch (bookingRequest.get_status()) {
 					case -1:
@@ -103,6 +109,7 @@ public class processConsumer extends OneShotBehaviour {
 						break;
 					case 0:
 						if (agent.canPay(bookingRequest)) {
+							
 							// send it to booking manager agent
 							BookingRequest bookingReq = new BookingRequest(bookingRequest);
 							bookingReq.set_status(1);
@@ -132,6 +139,21 @@ public class processConsumer extends OneShotBehaviour {
 							PaymentRequest paymentRequest = new PaymentRequest(bookingRequest, toPay, 0);
 							ACLMessage msg_send = new ACLMessage(ACLMessage.INFORM);
 							msg_send.setConversationId("paymentRequest");
+							
+							// Search the AID of the PaymentManager agent
+							DFAgentDescription dfDescription2 = new DFAgentDescription();
+							ServiceDescription serviceDescription2 = new ServiceDescription();
+							serviceDescription2.setType("PaymentManager");
+							dfDescription2.addServices(serviceDescription2);
+							try {
+								DFAgentDescription[] paymentManager = DFService.search(agent, dfDescription2);
+								this._paymentManagerAID = paymentManager[0].getName();
+
+							} catch (FIPAException e) {
+								System.out.println(
+										"ConsumerAgent " + agent.getAID().getName() + " cannot find PaymentManager AID");
+								e.printStackTrace();
+							}
 							msg_send.addReceiver(this._paymentManagerAID);
 							msg_send.setContentObject(paymentRequest);
 							agent.send(msg_send);

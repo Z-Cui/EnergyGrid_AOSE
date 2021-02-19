@@ -40,21 +40,11 @@ public class BookingManagerAgent extends Agent {
 		addBehaviour(behaviour);
 	}
 
-	// add new received booking request to queue
+	// Add new received booking request to queue
 	public void addBookingRequestToQueue(BookingRequest bReq) {
 		// if this bq doesn't exist in queue, we add it.
 		if (!this._bookingRequestQueue.contains(bReq)) {
 			this._bookingRequestQueue.add(bReq);
-		}
-	}
-
-	// remove a booking requirement from queue
-	public void removeBookingRequirementFromQueue(BookingRequest bReq) {
-		try {
-			this._bookingRequestQueue.remove(bReq);
-		} catch (Exception e) {
-			System.out.print("Cannot remove BookingRequest from PriorityQueue in BookingManagerAgent");
-			e.printStackTrace();
 		}
 	}
 

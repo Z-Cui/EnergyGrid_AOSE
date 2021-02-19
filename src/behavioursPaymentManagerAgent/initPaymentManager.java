@@ -35,6 +35,6 @@ public class initPaymentManager extends OneShotBehaviour {
 
 		System.out.println("PaymentManagerAgent " + agent.getAID().getName() + " is ready.");
 		
-		agent.doWait(5000);
+		agent.doWait(15000);
 	}
 }

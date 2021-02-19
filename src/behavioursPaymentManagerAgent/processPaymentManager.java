@@ -20,6 +20,8 @@ public class processPaymentManager extends OneShotBehaviour {
 	@Override
 	public void action() {
 		ACLMessage msg_receive = agent.receive();
+		
+		agent.doWait(200);
 
 		if (msg_receive != null) {
 
@@ -30,6 +32,7 @@ public class processPaymentManager extends OneShotBehaviour {
 					msg_send.setConversationId("paymentRequest");
 
 					PaymentRequest paymentRequest = (PaymentRequest) msg_receive.getContentObject();
+					//System.out.println(paymentRequest.toString());
 
 					switch (paymentRequest.get_status()) {
 					case 0: // consumer sent to PaymentManager
@@ -37,16 +40,16 @@ public class processPaymentManager extends OneShotBehaviour {
 						msg_send.setContentObject(paymentRequest);
 						agent.send(msg_send);
 						System.out.println("-- PaymentManagerAgent: Received PaymentRequest from Consumer "
-								+ paymentRequest.get_bq().get_consumerId().getName() + " regarding Producer "
+								+ paymentRequest.get_bq().get_consumerId().getName() + ", will be sent to Producer "
 								+ paymentRequest.get_bq().get_producerId().getName());
 						break;
 					case 1: // producer accepted it and need to send to consumer
 						msg_send.addReceiver(paymentRequest.get_bq().get_consumerId());
 						msg_send.setContentObject(paymentRequest);
 						agent.send(msg_send);
-						System.out.println("-- PaymentManagerAgent: Send accepted " + " by Producer "
+						System.out.println("-- PaymentManagerAgent: Send accepted PaymentRequest from Producer "
 								+ paymentRequest.get_bq().get_producerId().getName()
-								+ " regarding PaymentRequest to Consumer "
+								+ ", will be sent to Consumer "
 								+ paymentRequest.get_bq().get_consumerId().getName());
 						break;
 					default:

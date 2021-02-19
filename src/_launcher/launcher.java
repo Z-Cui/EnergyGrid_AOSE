@@ -33,27 +33,29 @@ public class launcher {
 			ac2.start();
 			ac3 = mc.createNewAgent("PaymentManager", PaymentManagerAgent.class.getName(), new Object[] {});
 			ac3.start();
-			Thread.sleep(5000);
+			//Thread.sleep(5000);
 			
 			// Producers, create one producer with list hourly energy productivity
 			ac4 = mc.createNewAgent("Producer01", ProducerAgent.class.getName(),
 					new Object[] { new int[] { 10, 11 }, new int[] { 100, 120 },
-							new String[] { "nonRenewable", "nonRenewable" }, new Double[] { 1.1, 1.2 } });
+							new String[] { "nonRenewable", "tbd" }, new Double[] { 1.1, 1.2 } });
 			ac4.start();
-			Thread.sleep(5000);
+			//Thread.sleep(5000);
 			ac5 = mc.createNewAgent("ProducerListManager", ProducerListManagerAgent.class.getName(), new Object[] {});
 			ac5.start();
 			ac6 = mc.createNewAgent("ProducerSelector", ProducerSelectorAgent.class.getName(), new Object[] {});
 			ac6.start();
-			Thread.sleep(5000);
+			//Thread.sleep(5000);
 			
 			// paramters: 
+			//ac7 = mc.createNewAgent("Consumer01", ConsumerAgent.class.getName(),
+				//	new Object[] { 100.00, new String("nonRenewable"), 2.00, 1.5, 5.1, 4.2, new int[] { 10, 11 }, new int[] { 20, 30 } });
 			ac7 = mc.createNewAgent("Consumer01", ConsumerAgent.class.getName(),
-					new Object[] { 100.00, new String("nonRenewable"), 2.00, 1.5, 5.1, 4.2, new int[] { 10, 11 }, new int[] { 20, 30 } });
+					new Object[] { 100.00, new String("nonRenewable"), 2.00, 1.5, 5.1, 4.2, new int[] { 10 }, new int[] { 20 } });
 			ac7.start();
-			ac8 = mc.createNewAgent("Consumer02", ConsumerAgent.class.getName(),
-					new Object[] { 100.00, new String("nonRenewable"), 2.00, 1.5, 5.1, 4.2, new int[] {10,11}, new int[] {10,40} });
-			ac8.start();
+			//ac8 = mc.createNewAgent("Consumer02", ConsumerAgent.class.getName(),
+					//new Object[] { 100.00, new String("nonRenewable"), 2.00, 1.5, 5.1, 4.2, new int[] {10,11}, new int[] {10,40} });
+			//ac8.start();
 
 		} catch (StaleProxyException e) {
 		}

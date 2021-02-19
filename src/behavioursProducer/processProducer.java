@@ -22,10 +22,21 @@ public class processProducer extends OneShotBehaviour {
 	@Override
 	public void action() {
 		ACLMessage msg_receive = agent.receive();
+		
+		agent.doWait(200);
 
 		this.flag = 1;
+		
+		// if no reservation during 24h (simulated with 120 seconds), Producer agent turns to FINALIZE status
+		if((System.currentTimeMillis() - agent.getStartTimeWithoutMessage())/1000 > 120) {
+			System.out.println("-- ProducerAgent: does not receive any request for 24h");
+			this.flag = 2;
+		}
 
 		if (msg_receive != null) {
+			
+			agent.setStartTimeWithoutMessage(System.currentTimeMillis());
+			
 			if (msg_receive.getConversationId() == "bookingRequest") {
 				try {
 					BookingRequest bookingRequest = (BookingRequest) msg_receive.getContentObject();

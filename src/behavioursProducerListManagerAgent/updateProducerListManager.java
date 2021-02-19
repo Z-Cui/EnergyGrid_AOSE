@@ -17,7 +17,9 @@ public class updateProducerListManager extends OneShotBehaviour {
 
 	private static final long serialVersionUID = 1L;
 	ProducerListManagerAgent agent;
-	//private PriorityQueue<HourlyEnergyProductivity> _energyProductivityQueue = new PriorityQueue<HourlyEnergyProductivity>(new HourlyEnergyProductivity_Comparator());
+	// private PriorityQueue<HourlyEnergyProductivity> _energyProductivityQueue =
+	// new PriorityQueue<HourlyEnergyProductivity>(new
+	// HourlyEnergyProductivity_Comparator());
 	AID _marketPlaceAID;
 
 	public updateProducerListManager(ProducerListManagerAgent a) {
@@ -43,13 +45,11 @@ public class updateProducerListManager extends OneShotBehaviour {
 	@Override
 	public void action() {
 
-		agent.doWait(8000);
-
 		ACLMessage msg_send = new ACLMessage(ACLMessage.REQUEST);
 		msg_send.setConversationId("askProducerInfo");
 		msg_send.addReceiver(this._marketPlaceAID);
 		agent.send(msg_send);
-		
+
 		agent.doWait(200);
 
 		ACLMessage msg = agent.receive();
@@ -59,22 +59,29 @@ public class updateProducerListManager extends OneShotBehaviour {
 
 				if (msg.getConversationId() == "producerInfo_MarketPlaceToProducerListManager") {
 
-					PriorityQueue<HourlyEnergyProductivity> _energyProductivityQueue = (PriorityQueue<HourlyEnergyProductivity>) msg.getContentObject();
+					PriorityQueue<HourlyEnergyProductivity> _energyProductivityQueue = (PriorityQueue<HourlyEnergyProductivity>) msg
+							.getContentObject();
 
 					agent.set_energyProductivityQueue(_energyProductivityQueue);
 
-					//System.out.println("- ProducerListManager: Updated " + _energyProductivityQueue.size() + " Productivity Info from " + msg.getSender().getName());
+					// System.out.println("- ProducerListManager: Updated " +
+					// _energyProductivityQueue.size() + " Productivity Info from " +
+					// msg.getSender().getName());
 
 				} else
 					System.out.println("-- ProducerListManager: Received an unrecognizable message");
 			} else {
-				//System.out.println(
-						//"-- ProducerListManager: No response from MarketPlace agent regarding Producer Info, next update in 10 seconds");
+				// System.out.println(
+				// "-- ProducerListManager: No response from MarketPlace agent regarding
+				// Producer Info, next update in 30 seconds");
 			}
 		} catch (UnreadableException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
+		// update every 30 seconds
+		agent.doWait(30000);
 
 	}
 

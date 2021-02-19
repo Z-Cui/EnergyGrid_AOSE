@@ -55,5 +55,7 @@ public class shareProducerListManager extends OneShotBehaviour {
 		agent.send(msg);
 		System.out.println("-- ProducerListManager: Share " + agent.get_energyProductivityQueue().size()
 				+ " Producer Info from " + agent.getAID().getName() + " to " + this._producerSelectorAID.getName());
+		
+		agent.doWait(10000);
 	}
 }

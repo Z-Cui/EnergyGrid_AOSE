@@ -83,9 +83,8 @@ public class ProducerSelectorAgent extends Agent {
 
 		while (it.hasNext()) {
 
-			// loop: every consumption requirement
+			// loop: every consumption requirement in queue
 			HourlyConsumptionRequirement req = it.next();
-			// this.removeConsumptionRequirementFromQueue(req);
 
 			ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 			msg.addReceiver(req.get_consumerId());
@@ -95,8 +94,11 @@ public class ProducerSelectorAgent extends Agent {
 					this.get_energyProductivityQueue());
 
 			switch (bookingRequestBestProducer.get_status()) {
-			case -1: // did not find a producer who maximizes utility
+			case -1:
+				// Cannot find a producer for this consumption requirement
 				msg.setConversationId("noProducerForThisRequirement");
+				// Keep this requirement in newQueue, and it will set to the variable
+				// _consumptionRequirementQueue of ProducerSelectorAgent
 				newQueue.add(req);
 				try {
 					msg.setContentObject(bookingRequestBestProducer);
@@ -108,10 +110,10 @@ public class ProducerSelectorAgent extends Agent {
 				System.out.println("-- ProducerSelector: Cannot find a producer for the requirement " + req.toString());
 				break;
 			case 0: // found the best producer
-				// add the generated booking request proposal to queue (history)
+				// Add this proposal to history
 				this._historical_proposals.add(bookingRequestBestProducer);
 
-				// send proposal to consumer
+				// Send proposal to consumer
 				msg.setConversationId("bookingRequest");
 				try {
 					msg.setContentObject(bookingRequestBestProducer);
@@ -131,15 +133,19 @@ public class ProducerSelectorAgent extends Agent {
 		if (this.get_consumptionRequirementQueue().isEmpty()) {
 			FlagNoReq = 1;
 			System.out.println("!!! ProducerSelectorAgent: Now the queue for consumption requirements is EMPTY");
-		}
-		else {
-			System.out.println("!!! ProducerSelectorAgent: Tried to find producers, but some consumption requirements are unsatisfiable");
+		} else {
+			System.out.println(
+					"!!! ProducerSelectorAgent: Tried to find producers, but some consumption requirements are unsatisfiable");
 		}
 
 		return FlagNoReq;
 	}
 
-	// Select a producer maximize utility for a consumption requirement req
+	// This function selects a producer who maximizes utility for a consumption
+	// requirement req of a consumer. This function returns producer info(id,
+	// reservable quantity, reservable type) within a BookingRequest. If status of
+	// returned BookingRequest object is -1, it means ProducerSelector is not able
+	// to find any producer for this consumption requirement req.
 	public BookingRequest SelectProducerForOneRequirement(HourlyConsumptionRequirement req,
 			PriorityQueue<HourlyEnergyProductivity> prodQueue) {
 
@@ -159,6 +165,14 @@ public class ProducerSelectorAgent extends Agent {
 		while (it.hasNext()) {
 
 			HourlyEnergyProductivity prod = it.next();
+
+			// check energy type is valid : renewable OR nonRenewable
+			if (prod.get_producedEnergyType().equals("renewable")
+					|| prod.get_producedEnergyType().equals("nonRenewable")) {
+				// do nothing
+			} else {
+				continue;
+			}
 
 			// if the time parameter does not match
 			if (prod.get_startTime() != req.get_startTime()) {
@@ -224,7 +238,7 @@ public class ProducerSelectorAgent extends Agent {
 
 	}
 
-	// calculate the utility
+	// Calculate the utility
 	public double CalculateUtility(HourlyConsumptionRequirement req, Profile profile, HourlyEnergyProductivity prod,
 			int quantity) {
 
@@ -247,7 +261,7 @@ public class ProducerSelectorAgent extends Agent {
 		return (_k - _p) * _q + _b;
 	}
 
-	// add new received consumption requirement to queue
+	// Add new received consumption requirement to queue
 	public void addConsumptionRequirementToQueue(HourlyConsumptionRequirement consReq) {
 		// if this req doesn't exist in queue, we add it.
 		if (!this._consumptionRequirementQueue.contains(consReq)) {
@@ -255,7 +269,7 @@ public class ProducerSelectorAgent extends Agent {
 		}
 	}
 
-	// add new profile to profile-hashmap: key = AID.toString()
+	// Add new profile to profile-hashmap: key = AID.toString()
 	public void addProfileToHashMap(Profile profile) {
 
 		String _key = profile.get_consumerId().toString();
@@ -268,7 +282,7 @@ public class ProducerSelectorAgent extends Agent {
 			this._profileHashMap.put(_key, profile);
 	}
 
-	// find a profile from AID
+	// find a profile by a given consumer's AID
 	public Profile findProfileFromAID(AID aid) {
 		return _profileHashMap.get(aid.toString());
 	}
