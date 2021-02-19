@@ -35,6 +35,6 @@ public class initMarketPlace extends OneShotBehaviour {
 
 		System.out.println("MarketPlaceAgent " + agent.getAID().getName() + " is ready.");
 		
-		agent.doWait(200);
+		agent.doWait(5000);
 	}
 }

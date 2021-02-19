@@ -34,6 +34,8 @@ public class initConsumer extends OneShotBehaviour {
 		}
 
 		System.out.println("ConsumerAgent " + agent.getAID().getName() + " is ready.");
+		
+		agent.doWait(5000);
 
 	}
 }

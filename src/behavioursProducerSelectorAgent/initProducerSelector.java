@@ -33,6 +33,6 @@ public class initProducerSelector extends OneShotBehaviour{
 		}
 		System.out.println("ProducerSelectorAgent " + agent.getAID().getName() + " is ready.");
 		
-		agent.doWait(200);
+		agent.doWait(5000);
 	}
 }
