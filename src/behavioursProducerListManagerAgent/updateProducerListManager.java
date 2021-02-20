@@ -80,7 +80,7 @@ public class updateProducerListManager extends OneShotBehaviour {
 			e.printStackTrace();
 		}
 
-		// update every 30 seconds
+		// update every 4 hours (30 seconds)
 		agent.doWait(30000);
 
 	}

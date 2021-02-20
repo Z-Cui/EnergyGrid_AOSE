@@ -39,7 +39,7 @@ public class processBookingManager extends OneShotBehaviour {
 						msg_send.setContentObject(bookingRequest);
 						agent.send(msg_send);
 						System.out.println("-- BookingManagerAgent: Received BookingRequest from Consumer "
-								+ bookingRequest.get_consumerId().getName() + " regarding Producer "
+								+ bookingRequest.get_consumerId().getName() + " and transfered to Producer "
 								+ bookingRequest.get_producerId().getName());
 						break;
 					case 2: // producer accepted it and need to send to consumer
